@@ -1,7 +1,7 @@
 ---
 galaxy_info:
   author: jcfaith
-  description: Creates a new AD forest and promotes dc01 to the forest root domain controller
+  description: "Creates a new AD forest and promotes dc01 to the forest root domain controller"
   company: Red Hat
   license: MIT
   min_ansible_version: "2.16"

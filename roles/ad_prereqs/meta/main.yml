@@ -1,7 +1,7 @@
 ---
 galaxy_info:
   author: jcfaith
-  description: Installs the Windows roles/features required before promotion: AD DS, DNS, DHCP, DFS Namespaces/Replication, RSAT
+  description: "Installs the Windows roles/features required before promotion: AD DS, DNS, DHCP, DFS Namespaces/Replication, RSAT"
   company: Red Hat
   license: MIT
   min_ansible_version: "2.16"

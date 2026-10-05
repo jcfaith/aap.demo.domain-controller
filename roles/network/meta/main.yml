@@ -1,7 +1,7 @@
 ---
 galaxy_info:
   author: jcfaith
-  description: Creates the VPC/subnet/security group for the AD demo
+  description: "Creates the VPC/subnet/security group for the AD demo"
   company: Red Hat
   license: MIT
   min_ansible_version: "2.16"
