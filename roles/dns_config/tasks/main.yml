@@ -7,6 +7,7 @@
       Forwarders: "{{ dns_forwarders }}"
     script: |
       param($Forwarders)
+      $ErrorActionPreference = 'Stop'
       $current = @((Get-DnsServerForwarder -ErrorAction SilentlyContinue).IPAddress.IPAddressToString)
       $desired = @($Forwarders)
       if (@(Compare-Object $current $desired).Count -ne 0) {

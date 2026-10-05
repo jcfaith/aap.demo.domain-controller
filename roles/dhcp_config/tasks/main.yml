@@ -10,6 +10,7 @@
       IPAddress: "{{ dc01_private_ip }}"
     script: |
       param($DnsName, $IPAddress)
+      $ErrorActionPreference = 'Stop'
       $authorized = Get-DhcpServerInDC | Where-Object { $_.DnsName -eq $DnsName }
       if (-not $authorized) {
         Add-DhcpServerInDC -DnsName $DnsName -IPAddress $IPAddress
@@ -21,6 +22,7 @@
 - name: Mark the DHCP post-install configuration as complete
   ansible.windows.win_powershell:
     script: |
+      $ErrorActionPreference = 'Stop'
       $path = "HKLM:\SOFTWARE\Microsoft\ServerManager\Roles\12"
       if (-not (Test-Path $path)) { New-Item -Path $path -Force | Out-Null }
       $current = (Get-ItemProperty -Path $path -Name ConfigurationState -ErrorAction SilentlyContinue).ConfigurationState
@@ -41,6 +43,7 @@
       EndRange: "{{ dhcp_end_range }}"
     script: |
       param($ScopeId, $Name, $SubnetMask, $StartRange, $EndRange)
+      $ErrorActionPreference = 'Stop'
       $scope = Get-DhcpServerv4Scope -ScopeId $ScopeId -ErrorAction SilentlyContinue
       if (-not $scope) {
         Add-DhcpServerv4Scope -Name $Name -StartRange $StartRange -EndRange $EndRange -SubnetMask $SubnetMask -State Active
@@ -61,6 +64,7 @@
       LeaseDurationDays: "{{ dhcp_lease_duration_days }}"
     script: |
       param($ScopeId, $Router, $DnsServers, $DnsDomain, $LeaseDurationDays)
+      $ErrorActionPreference = 'Stop'
       Set-DhcpServerv4OptionValue -ScopeId $ScopeId -Router $Router -DnsServer $DnsServers -DnsDomain $DnsDomain
       Set-DhcpServerv4Scope -ScopeId $ScopeId -LeaseDuration ([TimeSpan]::FromDays($LeaseDurationDays))
       $Ansible.Changed = $true

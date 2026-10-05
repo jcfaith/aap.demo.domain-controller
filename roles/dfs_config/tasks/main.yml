@@ -26,6 +26,7 @@
       TargetPath: "\\\\{{ dc01_name }}\\{{ dfs_share_name }}"
     script: |
       param($NamespacePath, $TargetPath)
+      $ErrorActionPreference = 'Stop'
       $root = Get-DfsnRoot -Path $NamespacePath -ErrorAction SilentlyContinue
       if (-not $root) {
         New-DfsnRoot -Path $NamespacePath -TargetPath $TargetPath -Type DomainV2
@@ -34,15 +35,18 @@
         $Ansible.Changed = $false
       }
 
-- name: Add dc02 as a second namespace target (run once, from dc01)
+# Run on dc02 itself - creating the target remotely from dc01 fails with
+# "The requested object could not be found".
+- name: Add dc02 as a second namespace target (run once, on dc02)
   run_once: true
-  delegate_to: "{{ dc01_name }}"
+  delegate_to: "{{ dc02_name }}"
   ansible.windows.win_powershell:
     parameters:
       NamespacePath: "\\\\{{ domain_name }}\\{{ dfs_namespace_name }}"
       TargetPath: "\\\\{{ dc02_name }}\\{{ dfs_share_name }}"
     script: |
       param($NamespacePath, $TargetPath)
+      $ErrorActionPreference = 'Stop'
       $target = Get-DfsnRootTarget -Path $NamespacePath -TargetPath $TargetPath -ErrorAction SilentlyContinue
       if (-not $target) {
         New-DfsnRootTarget -Path $NamespacePath -TargetPath $TargetPath
@@ -63,6 +67,7 @@
       ContentPath: "{{ dfs_share_path }}"
     script: |
       param($GroupName, $FolderName, $Dc01, $Dc02, $ContentPath)
+      $ErrorActionPreference = 'Stop'
 
       $rg = Get-DfsReplicationGroup -GroupName $GroupName -ErrorAction SilentlyContinue
       if (-not $rg) {

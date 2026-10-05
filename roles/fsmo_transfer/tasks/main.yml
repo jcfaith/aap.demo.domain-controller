@@ -19,9 +19,46 @@
       Roles: "{{ fsmo_roles_to_transfer }}"
     script: |
       param($TargetDc, $Roles)
-      Move-ADDirectoryServerOperationMasterRole -Identity $TargetDc -OperationMasterRole $Roles -Confirm:$false
-      $Ansible.Changed = $true
+      $ErrorActionPreference = 'Stop'
 
-- name: Pause briefly for AD replication of the role change to converge
-  ansible.builtin.pause:
-    seconds: 15
+      function Get-RoleHolders {
+        $f = Get-ADForest
+        $d = Get-ADDomain
+        @{
+          SchemaMaster         = $f.SchemaMaster
+          DomainNamingMaster   = $f.DomainNamingMaster
+          PDCEmulator          = $d.PDCEmulator
+          RIDMaster            = $d.RIDMaster
+          InfrastructureMaster = $d.InfrastructureMaster
+        }
+      }
+      function Test-OnTarget($holder) { $holder -like "$TargetDc.*" -or $holder -eq $TargetDc }
+
+      # Only move roles that aren't already on the target - safe to re-run.
+      $holders = Get-RoleHolders
+      $toMove = @($Roles | Where-Object { -not (Test-OnTarget $holders[$_]) })
+      if ($toMove.Count -eq 0) {
+        $Ansible.Changed = $false
+        $Ansible.Result = @{ moved = @(); holders = $holders }
+        return
+      }
+
+      Move-ADDirectoryServerOperationMasterRole -Identity $TargetDc -OperationMasterRole $toMove -Confirm:$false
+
+      # The transfer is written on the target DC; push it back to this one
+      # so the after-report reads the new owner instead of a stale copy.
+      repadmin /syncall /AdeP | Out-Null
+
+      $deadline = (Get-Date).AddMinutes(3)
+      do {
+        Start-Sleep -Seconds 5
+        $holders = Get-RoleHolders
+        $pending = @($toMove | Where-Object { -not (Test-OnTarget $holders[$_]) })
+      } while ($pending.Count -gt 0 -and (Get-Date) -lt $deadline)
+
+      if ($pending.Count -gt 0) {
+        throw "Transfer issued but $($pending -join ', ') still not showing $TargetDc after 3 minutes"
+      }
+
+      $Ansible.Changed = $true
+      $Ansible.Result = @{ moved = $toMove; holders = $holders }

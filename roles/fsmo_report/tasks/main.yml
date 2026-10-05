@@ -6,6 +6,7 @@
   delegate_to: "{{ dc01_name }}"
   ansible.windows.win_powershell:
     script: |
+      $ErrorActionPreference = 'Stop'
       $forest = Get-ADForest
       $domain = Get-ADDomain
 

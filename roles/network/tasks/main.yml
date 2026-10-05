@@ -113,6 +113,14 @@
             cidr_ip: "{{ network_cidr }}"
             rule_desc: Global Catalog
           - proto: tcp
+            ports: 9389
+            cidr_ip: "{{ network_cidr }}"
+            rule_desc: AD Web Services (AD PowerShell module, FSMO transfer)
+          - proto: udp
+            ports: 123
+            cidr_ip: "{{ network_cidr }}"
+            rule_desc: NTP - DC time sync for Kerberos
+          - proto: tcp
             ports: 49152-65535
             cidr_ip: "{{ network_cidr }}"
             rule_desc: Dynamic RPC (AD replication, DFS-R)
