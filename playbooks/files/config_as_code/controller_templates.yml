@@ -3,7 +3,7 @@ controller_templates:
 
   - name: DC - 01 Provision Network
     job_type: run
-    inventory: AD Demo Inventory
+    inventory: DC Demo Inventory
     organization: "{{ my_organization }}"
     execution_environment: Default execution environment
     project: aap.demo.domain-controller
@@ -14,7 +14,7 @@ controller_templates:
 
   - name: DC - 02 Provision DC Instances
     job_type: run
-    inventory: AD Demo Inventory
+    inventory: DC Demo Inventory
     organization: "{{ my_organization }}"
     execution_environment: Default execution environment
     project: aap.demo.domain-controller
@@ -26,7 +26,7 @@ controller_templates:
 
   - name: DC - 03 Install AD Roles
     job_type: run
-    inventory: AD Demo Inventory
+    inventory: DC Demo Inventory
     organization: "{{ my_organization }}"
     execution_environment: Default execution environment
     project: aap.demo.domain-controller
@@ -36,7 +36,7 @@ controller_templates:
 
   - name: DC - 04 Promote Forest Root
     job_type: run
-    inventory: AD Demo Inventory
+    inventory: DC Demo Inventory
     organization: "{{ my_organization }}"
     execution_environment: Default execution environment
     project: aap.demo.domain-controller
@@ -50,7 +50,7 @@ controller_templates:
 
   - name: DC - 05 Promote Additional DC
     job_type: run
-    inventory: AD Demo Inventory
+    inventory: DC Demo Inventory
     organization: "{{ my_organization }}"
     execution_environment: Default execution environment
     project: aap.demo.domain-controller
@@ -61,7 +61,7 @@ controller_templates:
 
   - name: DC - 06 Configure DNS
     job_type: run
-    inventory: AD Demo Inventory
+    inventory: DC Demo Inventory
     organization: "{{ my_organization }}"
     execution_environment: Default execution environment
     project: aap.demo.domain-controller
@@ -71,7 +71,7 @@ controller_templates:
 
   - name: DC - 07 Configure DHCP
     job_type: run
-    inventory: AD Demo Inventory
+    inventory: DC Demo Inventory
     organization: "{{ my_organization }}"
     execution_environment: Default execution environment
     project: aap.demo.domain-controller
@@ -81,7 +81,7 @@ controller_templates:
 
   - name: DC - 08 Configure DFS
     job_type: run
-    inventory: AD Demo Inventory
+    inventory: DC Demo Inventory
     organization: "{{ my_organization }}"
     execution_environment: Default execution environment
     project: aap.demo.domain-controller
@@ -91,7 +91,7 @@ controller_templates:
 
   - name: DC - 09 FSMO Report
     job_type: run
-    inventory: AD Demo Inventory
+    inventory: DC Demo Inventory
     organization: "{{ my_organization }}"
     execution_environment: Default execution environment
     project: aap.demo.domain-controller
@@ -101,7 +101,7 @@ controller_templates:
 
   - name: DC - 10 FSMO Transfer
     job_type: run
-    inventory: AD Demo Inventory
+    inventory: DC Demo Inventory
     organization: "{{ my_organization }}"
     execution_environment: Default execution environment
     project: aap.demo.domain-controller
@@ -136,7 +136,7 @@ controller_templates:
 
   - name: DC - Teardown
     job_type: run
-    inventory: AD Demo Inventory
+    inventory: DC Demo Inventory
     organization: "{{ my_organization }}"
     execution_environment: Default execution environment
     project: aap.demo.domain-controller

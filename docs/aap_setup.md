@@ -33,7 +33,7 @@ ansible-playbook playbooks/setup_demo.yml
 
 If you forked this repo, override the project URL: `-e my_project_scm_url=https://github.com/<you>/aap.demo.domain-controller.git`.
 
-This creates the `IT Service Automation` organization, the `aap.demo.domain-controller` project (and syncs it), the `AD Domain Secrets` credential type, the credentials (`AWS`, `DC Build Admin`, `DC Operations Admin`, `AD Domain Secrets`), the `AD Demo Inventory` with its AWS EC2 dynamic source, every job template, the `DC Deployment & AD Operations` workflow, and the `Platform-Eng`/`AD-Ops` teams with their role grants.
+This creates the `IT Service Automation` organization, the `aap.demo.domain-controller` project (and syncs it), the `AD Domain Secrets` credential type, the credentials (`DC Demo AWS`, `DC Build Admin`, `DC Operations Admin`, `AD Domain Secrets`), the `DC Demo Inventory` with its AWS EC2 dynamic source, every job template, the `DC Deployment & AD Operations` workflow, and the `Platform-Eng`/`AD-Ops` teams with their role grants.
 
 ## 3. Execution environment
 

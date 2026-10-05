@@ -1,6 +1,6 @@
 ---
 controller_inventories:
-  - name: AD Demo Inventory
+  - name: DC Demo Inventory
     organization: "{{ my_organization }}"
     description: Dynamic inventory of the two domain controller EC2 instances
     variables:
@@ -11,7 +11,7 @@ controller_inventories:
 
 controller_inventory_sources:
   - name: AWS - Domain Controllers
-    inventory: AD Demo Inventory
+    inventory: DC Demo Inventory
     organization: "{{ my_organization }}"
     source: ec2
     credential: "{{ my_aws_credential }}"

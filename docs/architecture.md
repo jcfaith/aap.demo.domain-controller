@@ -44,7 +44,7 @@ One AAP workflow template runs this whole sequence end to end. Each step is also
 
 | Credential | Type | Used by | Identity |
 |---|---|---|---|
-| `AWS` | Amazon Web Services | 01, 02, Teardown | n/a |
+| `DC Demo AWS` | Amazon Web Services | 01, 02, Teardown | n/a |
 | `DC Build Admin` | Machine | 02-05 | local `Administrator` on each EC2 instance |
 | `DC Operations Admin` | Machine | 06-10 | the domain `Administrator` account (same password as above, but a distinct AAP credential object) |
 | `AD Domain Secrets` | AD Domain Secrets (custom type) | 04, 05 | injects `safe_mode_password` and `domain_admin_password` as extra vars at run time |

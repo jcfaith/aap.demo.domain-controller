@@ -5,7 +5,7 @@
   vars:
     ansible_python_interpreter: /usr/bin/python3
     my_organization: "IT Service Automation"
-    my_aws_credential: AWS
+    my_aws_credential: DC Demo AWS
     my_build_credential: DC Build Admin
     my_ops_credential: DC Operations Admin
     my_domain_secrets_credential: AD Domain Secrets
@@ -44,6 +44,14 @@
         aws_access_key: "{{ lookup('ansible.builtin.env', 'AWS_ACCESS_KEY_ID') }}"
         aws_secret_key: "{{ lookup('ansible.builtin.env', 'AWS_SECRET_ACCESS_KEY') }}"
         dc_admin_password: "{{ lookup('ansible.builtin.env', 'DC_ADMIN_PASSWORD') }}"
+
+    - name: Point the configuration roles at this AAP instance
+      no_log: true
+      ansible.builtin.set_fact:
+        aap_hostname: "{{ lookup('ansible.builtin.env', 'CONTROLLER_HOST') }}"
+        aap_username: "{{ lookup('ansible.builtin.env', 'CONTROLLER_USERNAME') }}"
+        aap_password: "{{ lookup('ansible.builtin.env', 'CONTROLLER_PASSWORD') }}"
+        aap_validate_certs: false
 
     - name: Include configurations
       ansible.builtin.include_vars:

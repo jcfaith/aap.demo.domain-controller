@@ -101,7 +101,7 @@ controller_workflows:
               - identifier: DC - 10 FSMO Transfer
           unified_job_template:
             name: Approve FSMO Transfer
-            type: workflow_approval_template
+            type: workflow_approval
             description: Confirm it's OK to move the selected FSMO role(s) to dc02 before proceeding
             timeout: 3600
 
