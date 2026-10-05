@@ -19,7 +19,7 @@
 
     - name: Resolve the latest Windows Server 2022 AMI for this region
       ansible.builtin.set_fact:
-        dc_ami_id: "{{ (lookup('amazon.aws.aws_ssm', dc_ami_ssm_path, region=dc_region) | from_json).image_id }}"
+        dc_ami_id: "{{ lookup('amazon.aws.aws_ssm', dc_ami_ssm_path, region=dc_region) }}"
 
     - name: Look up the demo subnet
       register: dc_subnet_info
