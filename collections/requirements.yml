@@ -10,3 +10,5 @@ collections:
     version: 2.1.0
   - name: ansible.utils
     version: 6.0.0
+  - name: microsoft.ad
+    version: 1.9.2

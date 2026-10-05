@@ -4,3 +4,8 @@
 domain_name: ad.demo.local
 domain_netbios_name: DEMOAD
 site_name: Default-First-Site-Name
+# Shared by dc_instances via set_stats when run in the workflow.
+dc01_name: dc01
+dc02_name: dc02
+dc01_private_ip: 10.60.0.10
+dc02_private_ip: 10.60.0.11

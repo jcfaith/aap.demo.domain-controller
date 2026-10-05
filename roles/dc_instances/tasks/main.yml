@@ -38,11 +38,11 @@
         region: "{{ dc_region }}"
         state: running
         vpc_subnet_id: "{{ dc_subnet_info.subnets[0].id }}"
-        private_ip_address: "{{ item.private_ip }}"
         instance_type: "{{ dc_instance_type }}"
         security_group: "{{ dc_security_group_name }}"
         network:
           assign_public_ip: "{{ dc_assign_public_ip }}"
+          private_ip_address: "{{ item.private_ip }}"
         image_id: "{{ dc_ami_id }}"
         tags:
           Name: "{{ item.name }}"

@@ -1,4 +1,17 @@
 ---
+# EC2 launches Windows with a random EC2AMAZ-xxxx computer name. Rename to the
+# inventory hostname (dc01/dc02) before promotion - the computer name is baked
+# into AD, DNS, DFS and FSMO from that point on.
+- name: Set the computer name to match the inventory hostname
+  ansible.windows.win_hostname:
+    name: "{{ inventory_hostname }}"
+  register: ad_prereqs_hostname
+
+- name: Reboot to apply the new computer name
+  when: ad_prereqs_hostname.reboot_required
+  ansible.windows.win_reboot:
+    reboot_timeout: 600
+
 - name: Install the Windows features both domain controllers need
   ansible.windows.win_feature:
     name: "{{ ad_prereqs_features }}"

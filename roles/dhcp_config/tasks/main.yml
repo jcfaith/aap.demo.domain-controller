@@ -7,7 +7,7 @@
   ansible.windows.win_powershell:
     parameters:
       DnsName: "{{ inventory_hostname }}.{{ domain_name }}"
-      IPAddress: "{{ ansible_host }}"
+      IPAddress: "{{ dc01_private_ip }}"
     script: |
       param($DnsName, $IPAddress)
       $authorized = Get-DhcpServerInDC | Where-Object { $_.DnsName -eq $DnsName }

@@ -6,7 +6,7 @@
     state: directory
 
 - name: Share the DFS folder over SMB
-  community.windows.win_share:
+  ansible.windows.win_share:
     name: "{{ dfs_share_name }}"
     path: "{{ dfs_share_path }}"
     full: Everyone
