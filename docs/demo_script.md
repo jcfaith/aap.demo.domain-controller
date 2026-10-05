@@ -28,6 +28,10 @@ Pull up **Credentials** and **Teams** in the AAP UI once the workflow finishes, 
 - "The fourth is a custom credential type we defined - `AD Domain Secrets`. It holds the safe-mode/domain admin password this whole build depends on and hands it to the promotion jobs at run time. It's not in a file, not in git, and you can swap it for a CyberArk or HashiCorp Vault lookup without touching a single playbook."
 - "And then Teams: `Platform-Eng` can rebuild and promote these DCs. `AD-Ops` can run DNS, DHCP, DFS, and FSMO changes - day 2 operations - but literally cannot launch the provisioning or promotion templates. That's not a convention your team has to remember to follow. AAP enforces it."
 
+## After the demo
+
+Run **DC - Teardown**. That's the whole reset - next time, launch the workflow again from scratch. If you forget, **DC - Nightly Teardown** cleans up at 11 PM Pacific.
+
 ## Anticipated pushback, and honest answers
 
 - **"Why would I automate FSMO transfer at all?"** - You might not run it often, but having it as a reviewed, approved, logged, repeatable job template beats an ad hoc PowerShell session during an actual DR event, when people are stressed and typing commands by hand.

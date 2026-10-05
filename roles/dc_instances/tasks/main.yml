@@ -77,13 +77,13 @@
         region: "{{ dc_region }}"
         filters:
           tag:Environment: ad-demo
-          instance-state-name: [running, stopped]
+          instance-state-name: [pending, running, stopping, stopped]
 
-    - name: Terminate the demo instances
-      loop: "{{ dc_instance_info.instances }}"
-      loop_control:
-        label: "{{ item.tags.Name | default(item.instance_id) }}"
+    - name: Terminate the demo instances and wait until they are gone
+      when: dc_instance_info.instances | length > 0
       amazon.aws.ec2_instance:
         region: "{{ dc_region }}"
         state: absent
-        instance_ids: "{{ item.instance_id }}"
+        instance_ids: "{{ dc_instance_info.instances | map(attribute='instance_id') | list }}"
+        wait: true
+        wait_timeout: 600

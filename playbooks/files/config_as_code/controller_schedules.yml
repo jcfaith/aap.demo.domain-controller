@@ -1,0 +1,11 @@
+---
+# Cost safety net: tears the whole AWS environment down every night in case
+# someone forgets to run DC - Teardown after a demo. Disable it in AAP
+# (Schedules -> toggle) if you need the DCs to survive overnight.
+controller_schedules:
+  - name: DC - Nightly Teardown
+    description: Terminates the demo DCs and removes the VPC every night
+    unified_job_template: DC - Teardown
+    organization: "{{ my_organization }}"
+    rrule: "DTSTART;TZID=America/Los_Angeles:20261005T230000 RRULE:FREQ=DAILY;INTERVAL=1"
+    enabled: true

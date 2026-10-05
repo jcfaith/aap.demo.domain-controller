@@ -52,7 +52,26 @@ Launch the **DC Deployment & AD Operations** workflow template. `domain_name`/`d
 
 ## 5. Tear down
 
-Run the **DC - Teardown** job template when you're done - it terminates both EC2 instances and removes the VPC. RHDP/demo-lab AWS accounts are usually billed by the hour; don't leave this running overnight.
+Run the **DC - Teardown** job template when you're done. It removes everything the demo created in AWS:
+
+- both domain controller instances (any state - pending, running, stopping, stopped), waiting until they are fully terminated
+- every route table, the internet gateway, the subnet, and the security group
+- the VPC itself
+
+Nothing outside the demo's `addemo` VPC and `Environment: ad-demo` tag is touched. It is safe to run at any time, including when the environment is half-built or already gone - each step skips what isn't there.
+
+**Nightly safety net:** `setup_demo.yml` also creates a **DC - Nightly Teardown** schedule that runs DC - Teardown every day at 11 PM Pacific. If you need the DCs to survive overnight (e.g. building the night before a morning demo), toggle that schedule off under **Schedules** and turn it back on afterwards.
+
+## 6. Running the demo again
+
+The demo is designed to be rebuilt from scratch as often as you like:
+
+1. Run **DC - Teardown** (or let the nightly schedule do it).
+2. Launch **DC Deployment & AD Operations** again.
+
+Every step is idempotent, so re-launching the workflow against an environment that already exists is also safe - it skips what's already built and picks up where a failed run stopped. The EC2 inventory refreshes on every launch, so terminated hosts drop out of `DC Demo Inventory` automatically.
+
+Build time from nothing to the FSMO approval gate is roughly 45-60 minutes; for a live customer session, build it beforehand and start the narration from the FSMO report.
 
 ## Validating the RBAC/credential config
 

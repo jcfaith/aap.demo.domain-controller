@@ -209,20 +209,24 @@
         cidr: "{{ network_cidr }}"
         region: "{{ network_region }}"
 
+    # Every non-main route table in the demo VPC, not just the first tagged
+    # one - any leftover table blocks the VPC delete below.
     - name: Gather route table IDs
       register: inet_route_table
       amazon.aws.ec2_vpc_route_table_info:
         region: "{{ network_region }}"
         filters:
-          tag:Name: "{{ network_rt_name }}"
           vpc-id: "{{ my_vpc.vpc.id }}"
 
-    - name: Remove route table
-      when: inet_route_table.route_tables | length > 0
+    - name: Remove route tables
+      loop: "{{ inet_route_table.route_tables }}"
+      loop_control:
+        label: "{{ item.id }}"
+      when: item.associations | selectattr('main') | list | length == 0
       amazon.aws.ec2_vpc_route_table:
         vpc_id: "{{ my_vpc.vpc.id }}"
         region: "{{ network_region }}"
-        route_table_id: "{{ inet_route_table.route_tables[0].id }}"
+        route_table_id: "{{ item.id }}"
         lookup: id
         state: absent
 

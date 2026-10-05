@@ -30,4 +30,4 @@ docs/              architecture.md, aap_setup.md, demo_script.md, fsmo_notes.md
 
 ## Cost note
 
-This provisions real EC2 instances. Run the **DC - Teardown** job template when you're done.
+This provisions real EC2 instances. Run the **DC - Teardown** job template when you're done; it removes every AWS resource the demo creates. A **DC - Nightly Teardown** schedule (11 PM Pacific) is created as a safety net - see `docs/aap_setup.md`.
