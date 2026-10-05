@@ -32,3 +32,12 @@ controller_inventory_sources:
           prefix: tag_Role
         - key: tags.Environment
           prefix: tag_Environment
+
+# The provisioning/teardown playbooks run against localhost before any DC
+# exists, and AAP refuses to start a job against an empty inventory.
+# Manually added hosts are left alone when the EC2 source syncs.
+controller_hosts:
+  - name: localhost
+    inventory: DC Demo Inventory
+    variables:
+      ansible_connection: local
