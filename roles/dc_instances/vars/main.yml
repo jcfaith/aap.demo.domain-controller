@@ -1,13 +1,16 @@
 ---
-dc_region: "{{ network_region }}"
-dc_subnet_name: "{{ network_subnet_name }}"
-dc_security_group_name: "{{ network_security_group_name }}"
+# network_* comes from the network role via set_stats when run in the workflow;
+# the defaults mirror that role's naming so this step also runs standalone.
+dc_network_name: "{{ network_name | default('addemo') }}"
+dc_region: "{{ network_region | default('us-east-1') }}"
+dc_subnet_name: "{{ network_subnet_name | default(dc_network_name ~ '_Subnet') }}"
+dc_security_group_name: "{{ network_security_group_name | default(dc_network_name ~ '_SECGRP') }}"
 dc_instance_type: m5.xlarge
 dc_assign_public_ip: true
 dc_alwaysup: false
 dc_deleteby: service.ansible
 dc_ec2_ansible_group: service.ansible
-dc_my_email_address: "{{ network_my_email_address }}"
+dc_my_email_address: "{{ network_my_email_address | default('service.ansible@redhat.com') }}"
 # Source of truth for the AMI id - always resolves to the latest published
 # Windows Server 2022 base image in the target region, never hardcoded.
 dc_ami_ssm_path: /aws/service/ami-windows-latest/Windows_Server-2022-English-Full-Base
