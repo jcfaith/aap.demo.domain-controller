@@ -1,0 +1,12 @@
+---
+ad_prereqs_features:
+  - AD-Domain-Services
+  - DNS
+  - DHCP
+  - FS-DFS-Namespace
+  - FS-DFS-Replication
+  - RSAT-ADDS
+  - RSAT-DNS-Server
+  - RSAT-DHCP
+  - RSAT-DFS-Mgmt-Con
+  - GPMC

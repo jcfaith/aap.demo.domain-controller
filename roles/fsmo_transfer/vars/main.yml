@@ -1,0 +1,9 @@
+---
+# Overridable via the job template survey - which role(s) to move and where.
+fsmo_target_dc: "{{ dc02_name | default('dc02') }}"
+fsmo_roles_to_transfer:
+  - PDCEmulator
+  - RIDMaster
+  - InfrastructureMaster
+  - SchemaMaster
+  - DomainNamingMaster

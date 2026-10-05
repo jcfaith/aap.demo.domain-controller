@@ -1,0 +1,8 @@
+---
+galaxy_info:
+  author: jcfaith
+  description: Transfers one or more FSMO roles to a target domain controller
+  company: Red Hat
+  license: MIT
+  min_ansible_version: "2.16"
+dependencies: []

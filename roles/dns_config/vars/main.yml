@@ -1,0 +1,11 @@
+---
+dns_forwarders:
+  - 8.8.8.8
+  - 1.1.1.1
+dns_sample_records:
+  - name: app01
+    type: A
+    value: 10.60.0.20
+  - name: fileshare
+    type: A
+    value: 10.60.0.21

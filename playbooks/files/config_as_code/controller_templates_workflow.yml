@@ -1,0 +1,123 @@
+---
+controller_workflows:
+  - name: DC Deployment & AD Operations
+    organization: "{{ my_organization }}"
+    related:
+      workflow_nodes:
+
+        - identifier: DC - 01 Provision Network
+          related:
+            success_nodes:
+              - identifier: DC - 02 Provision DC Instances
+          unified_job_template:
+            name: DC - 01 Provision Network
+            organization:
+              name: "{{ my_organization }}"
+            type: job_template
+
+        - identifier: DC - 02 Provision DC Instances
+          related:
+            success_nodes:
+              - identifier: DC - 03 Install AD Roles
+          unified_job_template:
+            name: DC - 02 Provision DC Instances
+            organization:
+              name: "{{ my_organization }}"
+            type: job_template
+
+        - identifier: DC - 03 Install AD Roles
+          related:
+            success_nodes:
+              - identifier: DC - 04 Promote Forest Root
+          unified_job_template:
+            name: DC - 03 Install AD Roles
+            organization:
+              name: "{{ my_organization }}"
+            type: job_template
+
+        - identifier: DC - 04 Promote Forest Root
+          related:
+            success_nodes:
+              - identifier: DC - 05 Promote Additional DC
+          unified_job_template:
+            name: DC - 04 Promote Forest Root
+            organization:
+              name: "{{ my_organization }}"
+            type: job_template
+
+        - identifier: DC - 05 Promote Additional DC
+          related:
+            success_nodes:
+              - identifier: DC - 06 Configure DNS
+          unified_job_template:
+            name: DC - 05 Promote Additional DC
+            organization:
+              name: "{{ my_organization }}"
+            type: job_template
+
+        - identifier: DC - 06 Configure DNS
+          related:
+            success_nodes:
+              - identifier: DC - 07 Configure DHCP
+          unified_job_template:
+            name: DC - 06 Configure DNS
+            organization:
+              name: "{{ my_organization }}"
+            type: job_template
+
+        - identifier: DC - 07 Configure DHCP
+          related:
+            success_nodes:
+              - identifier: DC - 08 Configure DFS
+          unified_job_template:
+            name: DC - 07 Configure DHCP
+            organization:
+              name: "{{ my_organization }}"
+            type: job_template
+
+        - identifier: DC - 08 Configure DFS
+          related:
+            success_nodes:
+              - identifier: DC - 09 FSMO Report (Before)
+          unified_job_template:
+            name: DC - 08 Configure DFS
+            organization:
+              name: "{{ my_organization }}"
+            type: job_template
+
+        - identifier: DC - 09 FSMO Report (Before)
+          related:
+            success_nodes:
+              - identifier: Approve FSMO Transfer
+          unified_job_template:
+            name: DC - 09 FSMO Report
+            organization:
+              name: "{{ my_organization }}"
+            type: job_template
+
+        - identifier: Approve FSMO Transfer
+          related:
+            success_nodes:
+              - identifier: DC - 10 FSMO Transfer
+          unified_job_template:
+            name: Approve FSMO Transfer
+            type: workflow_approval_template
+            description: Confirm it's OK to move the selected FSMO role(s) to dc02 before proceeding
+            timeout: 3600
+
+        - identifier: DC - 10 FSMO Transfer
+          related:
+            success_nodes:
+              - identifier: DC - 09 FSMO Report (After)
+          unified_job_template:
+            name: DC - 10 FSMO Transfer
+            organization:
+              name: "{{ my_organization }}"
+            type: job_template
+
+        - identifier: DC - 09 FSMO Report (After)
+          unified_job_template:
+            name: DC - 09 FSMO Report
+            organization:
+              name: "{{ my_organization }}"
+            type: job_template

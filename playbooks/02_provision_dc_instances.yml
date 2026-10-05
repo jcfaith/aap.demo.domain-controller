@@ -1,0 +1,12 @@
+---
+- name: Provision the domain controller EC2 instances
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  tasks:
+    - name: Include the dc_instances role
+      tags:
+        - create
+      ansible.builtin.include_role:
+        name: dc_instances

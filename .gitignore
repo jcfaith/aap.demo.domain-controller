@@ -1,0 +1,5 @@
+*.retry
+.vscode/
+__pycache__/
+*.pyc
+.collections/

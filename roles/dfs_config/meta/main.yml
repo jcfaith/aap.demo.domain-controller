@@ -1,0 +1,8 @@
+---
+galaxy_info:
+  author: jcfaith
+  description: Creates a DFS namespace and replication group between dc01 and dc02
+  company: Red Hat
+  license: MIT
+  min_ansible_version: "2.16"
+dependencies: []

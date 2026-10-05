@@ -1,0 +1,8 @@
+---
+galaxy_info:
+  author: jcfaith
+  description: Provisions the two Windows Server EC2 instances used as domain controllers
+  company: Red Hat
+  license: MIT
+  min_ansible_version: "2.16"
+dependencies: []

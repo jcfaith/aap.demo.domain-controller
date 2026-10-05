@@ -1,0 +1,34 @@
+---
+- name: Confirm required secrets and facts were supplied
+  ansible.builtin.assert:
+    that:
+      - safe_mode_password is defined
+      - domain_admin_password is defined
+      - dc01_private_ip is defined
+    fail_msg: >-
+      Missing safe_mode_password/domain_admin_password (from the AD Domain Secrets credential) or
+      dc01_private_ip (set by the dc_instances role earlier in the workflow).
+
+- name: Point this host at dc01 for DNS resolution before joining the domain
+  ansible.windows.win_dns_client:
+    adapter_names: "*"
+    dns_servers:
+      - "{{ dc01_private_ip }}"
+
+- name: Join the domain and promote this host to an additional domain controller
+  no_log: true
+  ansible.windows.win_domain_controller:
+    dns_domain_name: "{{ domain_name }}"
+    domain_admin_user: "{{ domain_netbios_name }}\\Administrator"
+    domain_admin_password: "{{ domain_admin_password }}"
+    safe_mode_password: "{{ safe_mode_password }}"
+    state: domain_controller
+    install_dns: true
+    reboot: true
+  register: dc_promote_additional_result
+
+- name: Share additional DC facts with other steps in the workflow
+  ansible.builtin.set_stats:
+    data:
+      additional_dc: "{{ inventory_hostname }}"
+      additional_dc_reboot_required: "{{ dc_promote_additional_result.reboot_required | default(false) }}"

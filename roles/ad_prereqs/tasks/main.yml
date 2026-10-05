@@ -1,0 +1,12 @@
+---
+- name: Install the Windows features both domain controllers need
+  ansible.windows.win_feature:
+    name: "{{ ad_prereqs_features }}"
+    state: present
+    include_management_tools: true
+  register: ad_prereqs_result
+
+- name: Reboot if the feature install requires it
+  when: ad_prereqs_result.reboot_required
+  ansible.windows.win_reboot:
+    reboot_timeout: 600

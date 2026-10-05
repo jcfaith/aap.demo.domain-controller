@@ -1,0 +1,32 @@
+---
+# There's no dedicated Ansible module for DNS server forwarders, so we wrap the
+# native cmdlet with ansible.windows.win_powershell and make it idempotent ourselves.
+- name: Set DNS forwarders
+  ansible.windows.win_powershell:
+    parameters:
+      Forwarders: "{{ dns_forwarders }}"
+    script: |
+      param($Forwarders)
+      $current = @((Get-DnsServerForwarder -ErrorAction SilentlyContinue).IPAddress.IPAddressToString)
+      $desired = @($Forwarders)
+      if (@(Compare-Object $current $desired).Count -ne 0) {
+        Set-DnsServerForwarder -IPAddress $Forwarders
+        $Ansible.Changed = $true
+      } else {
+        $Ansible.Changed = $false
+      }
+
+# These live in the AD-integrated zone and replicate to every DC automatically,
+# so create them once rather than racing both DCs to write the same record.
+- name: Create sample DNS records
+  run_once: true
+  delegate_to: "{{ dc01_name }}"
+  loop: "{{ dns_sample_records }}"
+  loop_control:
+    label: "{{ item.name }}.{{ domain_name }}"
+  ansible.windows.win_dns_record:
+    name: "{{ item.name }}"
+    zone: "{{ domain_name }}"
+    type: "{{ item.type }}"
+    value: "{{ item.value }}"
+    state: present

@@ -1,0 +1,6 @@
+---
+dfs_share_name: CorpData
+dfs_share_path: C:\DFSShares\CorpData
+dfs_namespace_name: CorpData
+dfs_replication_group_name: CorpData-RG
+dfs_replicated_folder_name: CorpData

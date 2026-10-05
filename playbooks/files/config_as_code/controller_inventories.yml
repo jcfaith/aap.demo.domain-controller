@@ -1,0 +1,34 @@
+---
+controller_inventories:
+  - name: AD Demo Inventory
+    organization: "{{ my_organization }}"
+    description: Dynamic inventory of the two domain controller EC2 instances
+    variables:
+      ansible_connection: winrm
+      ansible_winrm_transport: credssp
+      ansible_winrm_server_cert_validation: ignore
+      ansible_port: 5986
+
+controller_inventory_sources:
+  - name: AWS - Domain Controllers
+    inventory: AD Demo Inventory
+    organization: "{{ my_organization }}"
+    source: ec2
+    credential: "{{ my_aws_credential }}"
+    overwrite: true
+    update_on_launch: true
+    source_vars:
+      regions:
+        - "{{ network_region | default('us-east-1') }}"
+      filters:
+        tag:Environment: ad-demo
+        instance-state-name: running
+      hostnames:
+        - tag:Name
+      compose:
+        ansible_host: public_ip_address
+      keyed_groups:
+        - key: tags.Role
+          prefix: tag_Role
+        - key: tags.Environment
+          prefix: tag_Environment

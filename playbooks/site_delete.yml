@@ -1,0 +1,18 @@
+---
+- name: Tear down the AD demo environment
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  tasks:
+    - name: Remove the domain controller instances
+      tags:
+        - remove
+      ansible.builtin.include_role:
+        name: dc_instances
+
+    - name: Remove the network
+      tags:
+        - remove
+      ansible.builtin.include_role:
+        name: network

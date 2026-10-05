@@ -1,0 +1,89 @@
+---
+- name: Stuff we are always going to do
+  tags:
+    - always
+  block:
+
+    - name: Share dc_hosts with other steps in the workflow
+      ansible.builtin.set_stats:
+        data:
+          dc01_private_ip: "{{ dc_hosts[0].private_ip }}"
+          dc02_private_ip: "{{ dc_hosts[1].private_ip }}"
+          dc01_name: "{{ dc_hosts[0].name }}"
+          dc02_name: "{{ dc_hosts[1].name }}"
+
+- name: Provision the two domain controller instances
+  tags:
+    - create
+  block:
+
+    - name: Resolve the latest Windows Server 2022 AMI for this region
+      ansible.builtin.set_fact:
+        dc_ami_id: "{{ (lookup('amazon.aws.aws_ssm', dc_ami_ssm_path, region=dc_region) | from_json).image_id }}"
+
+    - name: Look up the demo subnet
+      register: dc_subnet_info
+      amazon.aws.ec2_vpc_subnet_info:
+        region: "{{ dc_region }}"
+        filters:
+          tag:Name: "{{ dc_subnet_name }}"
+
+    - name: Create the domain controller instances
+      register: dc_ec2_vms
+      loop: "{{ dc_hosts }}"
+      loop_control:
+        label: "{{ item.name }}"
+      amazon.aws.ec2_instance:
+        name: "{{ item.name }}"
+        region: "{{ dc_region }}"
+        state: running
+        vpc_subnet_id: "{{ dc_subnet_info.subnets[0].id }}"
+        private_ip_address: "{{ item.private_ip }}"
+        instance_type: "{{ dc_instance_type }}"
+        security_group: "{{ dc_security_group_name }}"
+        network:
+          assign_public_ip: "{{ dc_assign_public_ip }}"
+        image_id: "{{ dc_ami_id }}"
+        tags:
+          Name: "{{ item.name }}"
+          Role: "{{ item.role }}"
+          Environment: ad-demo
+          AlwaysUp: "{{ dc_alwaysup }}"
+          Createdby: Ansible Controller
+          Contact: "{{ dc_my_email_address }}"
+          DeleteBy: "{{ dc_deleteby }}"
+        user_data: "{{ lookup('template', 'scripts/aws_userdata') }}"
+        wait: true
+        wait_timeout: 600
+
+    - name: Wait for WinRM (port 5986) to come up on each instance
+      loop: "{{ dc_ec2_vms.results }}"
+      loop_control:
+        label: "{{ item.item.name }}"
+      ansible.builtin.wait_for:
+        port: 5986
+        host: "{{ item.instances[0].public_ip_address }}"
+        delay: 10
+        timeout: 420
+
+- name: Remove the domain controller instances
+  tags:
+    - remove
+  block:
+
+    - name: Get instances tagged for this demo
+      register: dc_instance_info
+      amazon.aws.ec2_instance_info:
+        region: "{{ dc_region }}"
+        filters:
+          tag:Environment: ad-demo
+          instance-state-name: [running, stopped]
+
+    - name: Terminate the demo instances
+      loop: "{{ dc_instance_info.instances }}"
+      loop_control:
+        label: "{{ item.tags.Name | default(item.instance_id) }}"
+      amazon.aws.ec2_instance:
+        region: "{{ dc_region }}"
+        state: absent
+        instance_ids: "{{ item.instance_id }}"

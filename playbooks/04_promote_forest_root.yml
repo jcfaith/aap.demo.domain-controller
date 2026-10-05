@@ -1,0 +1,9 @@
+---
+- name: Promote dc01 to the forest root domain controller
+  hosts: tag_Role_dc01
+  gather_facts: false
+
+  tasks:
+    - name: Include the dc_promote_root role
+      ansible.builtin.include_role:
+        name: dc_promote_root

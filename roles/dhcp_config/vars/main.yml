@@ -1,0 +1,8 @@
+---
+dhcp_scope_id: 10.60.0.0
+dhcp_scope_name: addemo-clients
+dhcp_subnet_mask: 255.255.255.0
+dhcp_start_range: 10.60.0.100
+dhcp_end_range: 10.60.0.200
+dhcp_router: 10.60.0.1
+dhcp_lease_duration_days: 8

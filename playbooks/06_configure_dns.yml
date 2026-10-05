@@ -1,0 +1,9 @@
+---
+- name: Configure DNS forwarders and sample records
+  hosts: tag_Environment_ad_demo
+  gather_facts: false
+
+  tasks:
+    - name: Include the dns_config role
+      ansible.builtin.include_role:
+        name: dns_config

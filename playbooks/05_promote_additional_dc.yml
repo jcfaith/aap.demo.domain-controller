@@ -1,0 +1,9 @@
+---
+- name: Join dc02 to the domain and promote it to an additional domain controller
+  hosts: tag_Role_dc02
+  gather_facts: false
+
+  tasks:
+    - name: Include the dc_promote_additional role
+      ansible.builtin.include_role:
+        name: dc_promote_additional

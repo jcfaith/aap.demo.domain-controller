@@ -1,0 +1,12 @@
+---
+- name: Provision the network for the AD demo
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  tasks:
+    - name: Include the network role
+      tags:
+        - create
+      ansible.builtin.include_role:
+        name: network

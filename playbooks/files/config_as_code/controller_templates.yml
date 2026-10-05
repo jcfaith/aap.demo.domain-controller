@@ -1,0 +1,147 @@
+---
+controller_templates:
+
+  - name: DC - 01 Provision Network
+    job_type: run
+    inventory: AD Demo Inventory
+    organization: "{{ my_organization }}"
+    execution_environment: Default execution environment
+    project: aap.demo.domain-controller
+    playbook: playbooks/01_provision_network.yml
+    job_tags: create
+    credentials:
+      - "{{ my_aws_credential }}"
+
+  - name: DC - 02 Provision DC Instances
+    job_type: run
+    inventory: AD Demo Inventory
+    organization: "{{ my_organization }}"
+    execution_environment: Default execution environment
+    project: aap.demo.domain-controller
+    playbook: playbooks/02_provision_dc_instances.yml
+    job_tags: create
+    credentials:
+      - "{{ my_aws_credential }}"
+      - "{{ my_build_credential }}"
+
+  - name: DC - 03 Install AD Roles
+    job_type: run
+    inventory: AD Demo Inventory
+    organization: "{{ my_organization }}"
+    execution_environment: Default execution environment
+    project: aap.demo.domain-controller
+    playbook: playbooks/03_install_ad_roles.yml
+    credentials:
+      - "{{ my_build_credential }}"
+
+  - name: DC - 04 Promote Forest Root
+    job_type: run
+    inventory: AD Demo Inventory
+    organization: "{{ my_organization }}"
+    execution_environment: Default execution environment
+    project: aap.demo.domain-controller
+    playbook: playbooks/04_promote_forest_root.yml
+    credentials:
+      - "{{ my_build_credential }}"
+      - "{{ my_domain_secrets_credential }}"
+    extra_vars:
+      domain_name: ad.demo.local
+      domain_netbios_name: DEMOAD
+
+  - name: DC - 05 Promote Additional DC
+    job_type: run
+    inventory: AD Demo Inventory
+    organization: "{{ my_organization }}"
+    execution_environment: Default execution environment
+    project: aap.demo.domain-controller
+    playbook: playbooks/05_promote_additional_dc.yml
+    credentials:
+      - "{{ my_build_credential }}"
+      - "{{ my_domain_secrets_credential }}"
+
+  - name: DC - 06 Configure DNS
+    job_type: run
+    inventory: AD Demo Inventory
+    organization: "{{ my_organization }}"
+    execution_environment: Default execution environment
+    project: aap.demo.domain-controller
+    playbook: playbooks/06_configure_dns.yml
+    credentials:
+      - "{{ my_ops_credential }}"
+
+  - name: DC - 07 Configure DHCP
+    job_type: run
+    inventory: AD Demo Inventory
+    organization: "{{ my_organization }}"
+    execution_environment: Default execution environment
+    project: aap.demo.domain-controller
+    playbook: playbooks/07_configure_dhcp.yml
+    credentials:
+      - "{{ my_ops_credential }}"
+
+  - name: DC - 08 Configure DFS
+    job_type: run
+    inventory: AD Demo Inventory
+    organization: "{{ my_organization }}"
+    execution_environment: Default execution environment
+    project: aap.demo.domain-controller
+    playbook: playbooks/08_configure_dfs.yml
+    credentials:
+      - "{{ my_ops_credential }}"
+
+  - name: DC - 09 FSMO Report
+    job_type: run
+    inventory: AD Demo Inventory
+    organization: "{{ my_organization }}"
+    execution_environment: Default execution environment
+    project: aap.demo.domain-controller
+    playbook: playbooks/09_fsmo_report.yml
+    credentials:
+      - "{{ my_ops_credential }}"
+
+  - name: DC - 10 FSMO Transfer
+    job_type: run
+    inventory: AD Demo Inventory
+    organization: "{{ my_organization }}"
+    execution_environment: Default execution environment
+    project: aap.demo.domain-controller
+    playbook: playbooks/10_fsmo_transfer.yml
+    credentials:
+      - "{{ my_ops_credential }}"
+    survey_enabled: true
+    survey_spec:
+      name: ""
+      description: ""
+      spec:
+        - name: Target domain controller
+          type: text
+          question_name: Which DC should receive the FSMO role(s)?
+          question_description: Hostname as it appears in AAP inventory (e.g. dc02)
+          variable: fsmo_target_dc
+          required: true
+          default: dc02
+        - name: Roles to transfer
+          type: multiselect
+          question_name: Which FSMO role(s) should move?
+          question_description: Select one or more
+          variable: fsmo_roles_to_transfer
+          required: true
+          default: PDCEmulator
+          choices:
+            - PDCEmulator
+            - RIDMaster
+            - InfrastructureMaster
+            - SchemaMaster
+            - DomainNamingMaster
+
+  - name: DC - Teardown
+    job_type: run
+    inventory: AD Demo Inventory
+    organization: "{{ my_organization }}"
+    execution_environment: Default execution environment
+    project: aap.demo.domain-controller
+    playbook: playbooks/site_delete.yml
+    job_tags: remove
+    credentials:
+      - "{{ my_aws_credential }}"
+      - "{{ my_build_credential }}"

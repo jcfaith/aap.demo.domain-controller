@@ -1,0 +1,9 @@
+---
+- name: Install AD DS / DNS / DHCP / DFS roles on both domain controllers
+  hosts: tag_Environment_ad_demo
+  gather_facts: false
+
+  tasks:
+    - name: Include the ad_prereqs role
+      ansible.builtin.include_role:
+        name: ad_prereqs

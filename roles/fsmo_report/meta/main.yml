@@ -1,0 +1,8 @@
+---
+galaxy_info:
+  author: jcfaith
+  description: Reports which domain controller currently holds each FSMO role
+  company: Red Hat
+  license: MIT
+  min_ansible_version: "2.16"
+dependencies: []

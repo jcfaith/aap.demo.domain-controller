@@ -1,0 +1,36 @@
+---
+# RBAC demo: two teams get genuinely different access, not just different
+# names. Platform-Eng can rebuild/promote the DCs; AD-Ops can only run the
+# day-2 AD operations (DNS/DHCP/DFS/FSMO) and cannot touch provisioning or
+# promotion. Validated/adjusted against the installed infra.aap_configuration
+# collection's documented schema during setup - see docs/aap_setup.md.
+aap_teams:
+  - name: Platform-Eng
+    organization: "{{ my_organization }}"
+    description: Can rebuild and promote the demo domain controllers
+
+  - name: AD-Ops
+    organization: "{{ my_organization }}"
+    description: Can run day-2 AD operations only - no access to provisioning/promotion
+
+controller_roles:
+  - team: Platform-Eng
+    role: admin
+    job_templates:
+      - DC - 01 Provision Network
+      - DC - 02 Provision DC Instances
+      - DC - 03 Install AD Roles
+      - DC - 04 Promote Forest Root
+      - DC - 05 Promote Additional DC
+      - DC - Teardown
+    workflow_job_templates:
+      - DC Deployment & AD Operations
+
+  - team: AD-Ops
+    role: execute
+    job_templates:
+      - DC - 06 Configure DNS
+      - DC - 07 Configure DHCP
+      - DC - 08 Configure DFS
+      - DC - 09 FSMO Report
+      - DC - 10 FSMO Transfer

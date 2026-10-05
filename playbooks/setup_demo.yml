@@ -1,0 +1,65 @@
+---
+- name: Set up the DC deployment demo in AAP (Day 0 - config as code)
+  hosts: localhost
+  gather_facts: false
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+    my_organization: "IT Service Automation"
+    my_aws_credential: AWS
+    my_build_credential: DC Build Admin
+    my_ops_credential: DC Operations Admin
+    my_domain_secrets_credential: AD Domain Secrets
+    my_project_scm_url: https://github.com/jcfaith/aap.demo.domain-controller.git
+
+  tasks:
+
+    - name: Confirm AAP connection and secrets are set
+      ansible.builtin.assert:
+        that:
+          - "lookup('ansible.builtin.env', 'CONTROLLER_HOST') != ''"
+          - "lookup('ansible.builtin.env', 'CONTROLLER_USERNAME') != ''"
+          - "lookup('ansible.builtin.env', 'CONTROLLER_PASSWORD') != ''"
+          - "lookup('ansible.builtin.env', 'AWS_ACCESS_KEY_ID') != ''"
+          - "lookup('ansible.builtin.env', 'AWS_SECRET_ACCESS_KEY') != ''"
+          - "lookup('ansible.builtin.env', 'DC_ADMIN_PASSWORD') != ''"
+        fail_msg:
+          - "One or more required environment variables are missing."
+          - "Required: CONTROLLER_HOST, CONTROLLER_USERNAME, CONTROLLER_PASSWORD,"
+          - "AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, DC_ADMIN_PASSWORD"
+          - "See docs/aap_setup.md."
+
+    - name: Create a temporary AAP token
+      ansible.platform.token:
+        aap_hostname: "{{ lookup('ansible.builtin.env', 'CONTROLLER_HOST') }}"
+        aap_username: "{{ lookup('ansible.builtin.env', 'CONTROLLER_USERNAME') }}"
+        aap_password: "{{ lookup('ansible.builtin.env', 'CONTROLLER_PASSWORD') }}"
+        aap_validate_certs: false
+        description: DC demo setup
+        scope: write
+        state: present
+
+    - name: Set secrets as facts for this run only
+      no_log: true
+      ansible.builtin.set_fact:
+        aws_access_key: "{{ lookup('ansible.builtin.env', 'AWS_ACCESS_KEY_ID') }}"
+        aws_secret_key: "{{ lookup('ansible.builtin.env', 'AWS_SECRET_ACCESS_KEY') }}"
+        dc_admin_password: "{{ lookup('ansible.builtin.env', 'DC_ADMIN_PASSWORD') }}"
+
+    - name: Include configurations
+      ansible.builtin.include_vars:
+        dir: files/config_as_code
+
+    - name: Demo components
+      vars:
+        meta_dependency_check: false  # noqa: var-naming[no-role-prefix]
+      ansible.builtin.include_role:
+        name: infra.aap_configuration.dispatch
+
+    - name: Remove the temporary token
+      when: ansible_facts['aap_token'] is defined
+      ansible.platform.token:
+        aap_hostname: "{{ lookup('ansible.builtin.env', 'CONTROLLER_HOST') }}"
+        existing_token: "{{ ansible_facts['aap_token'] }}"
+        aap_token: "{{ ansible_facts['aap_token']['token'] }}"
+        aap_validate_certs: false
+        state: absent

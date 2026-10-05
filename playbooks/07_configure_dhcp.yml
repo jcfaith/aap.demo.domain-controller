@@ -1,0 +1,12 @@
+---
+# DHCP runs on dc01 only - a second authoritative DHCP server on dc02 serving
+# the same scope would hand out duplicate leases. A real HA deployment would
+# split the scope across both servers; out of scope for this demo.
+- name: Authorize and configure the DHCP server
+  hosts: tag_Role_dc01
+  gather_facts: false
+
+  tasks:
+    - name: Include the dhcp_config role
+      ansible.builtin.include_role:
+        name: dhcp_config

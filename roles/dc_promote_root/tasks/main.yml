@@ -1,0 +1,27 @@
+---
+- name: Confirm the safe mode password was supplied
+  ansible.builtin.assert:
+    that:
+      - safe_mode_password is defined
+      - safe_mode_password | length > 0
+    fail_msg: >-
+      safe_mode_password is not set. It must come from the "AD Domain Secrets"
+      credential attached to this job template - see docs/aap_setup.md.
+
+- name: Create the new forest and promote this host to the forest root domain controller
+  no_log: true
+  ansible.windows.win_domain:
+    dns_domain_name: "{{ domain_name }}"
+    domain_netbios_name: "{{ domain_netbios_name }}"
+    safe_mode_password: "{{ safe_mode_password }}"
+    install_dns: true
+    reboot: true
+  register: dc_promote_root_result
+
+- name: Share forest root facts with other steps in the workflow
+  ansible.builtin.set_stats:
+    data:
+      domain_name: "{{ domain_name }}"
+      domain_netbios_name: "{{ domain_netbios_name }}"
+      forest_root_dc: "{{ inventory_hostname }}"
+      forest_root_reboot_required: "{{ dc_promote_root_result.reboot_required | default(false) }}"

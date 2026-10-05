@@ -1,0 +1,37 @@
+<powershell>
+# Disable Windows Auto Updates - avoid a surprise reboot mid-demo
+reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update" /v AUOptions /t REG_DWORD /d 1 /f
+net stop wuauserv
+net start wuauserv
+
+# Remove policies that would block WinRM
+reg delete "HKLM\SOFTWARE\Policies\Microsoft\Windows\WinRM\Service" /v AllowBasic /f
+reg delete "HKLM\SOFTWARE\Policies\Microsoft\Windows\WinRM\Service" /v AllowUnencryptedTraffic /f
+reg delete "HKLM\SOFTWARE\Policies\Microsoft\Windows\WinRM\Service" /v DisableRunAs /f
+
+# Disable Windows Defender real-time monitoring and the host firewall -
+# demo lab only, not a hardening recommendation for production DCs
+Set-MpPreference -DisableRealtimeMonitoring $true
+Set-NetFirewallProfile Domain,Public,Private -Enabled false
+
+# Enable WinRM over HTTPS with CredSSP
+Invoke-WebRequest -Uri https://raw.githubusercontent.com/ansible/ansible-documentation/devel/examples/scripts/ConfigureRemotingForAnsible.ps1 -OutFile C:\ConfigureRemotingForAnsible.ps1
+C:\ConfigureRemotingForAnsible.ps1 -ForceNewSSLCert -EnableCredSSP
+
+# Set the password on the built-in local Administrator account and make sure
+# it's enabled. This - not a custom local account - is deliberate: local SAM
+# accounts other than the built-in Administrator do not survive dcpromo, so
+# this is the one identity that carries through from "freshly launched EC2
+# instance" to "domain controller" to "domain Administrator" without
+# AAP ever needing to juggle a second local account. The password comes from
+# the AAP "Local Administrator" machine credential - it is injected at job
+# run time and never appears in this repo.
+$Password = ConvertTo-SecureString "{{ ansible_password }}" -AsPlainText -Force
+Get-LocalUser -Name "Administrator" | Set-LocalUser -Password $Password -PasswordNeverExpires $true
+Enable-LocalUser -Name "Administrator"
+
+winrm set winrm/config/service @{MaxConcurrentOperationsPerUser="15"}
+winrm set winrm/config @{MaxTimeoutms="1800000"}
+winrm set winrm/config/winrs @{MaxProcessesPerShell="15"}
+winrm set winrm/config/winrs @{MaxShellsPerUser="10"}
+</powershell>

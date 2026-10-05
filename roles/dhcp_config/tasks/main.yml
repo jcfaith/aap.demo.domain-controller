@@ -1,0 +1,66 @@
+---
+# No Ansible module covers DHCP server configuration - we wrap the native cmdlets
+# with ansible.windows.win_powershell and handle idempotency ourselves, same
+# pattern used in dns_config and dfs_config.
+
+- name: Authorize this DHCP server in Active Directory
+  ansible.windows.win_powershell:
+    parameters:
+      DnsName: "{{ inventory_hostname }}.{{ domain_name }}"
+      IPAddress: "{{ ansible_host }}"
+    script: |
+      param($DnsName, $IPAddress)
+      $authorized = Get-DhcpServerInDC | Where-Object { $_.DnsName -eq $DnsName }
+      if (-not $authorized) {
+        Add-DhcpServerInDC -DnsName $DnsName -IPAddress $IPAddress
+        $Ansible.Changed = $true
+      } else {
+        $Ansible.Changed = $false
+      }
+
+- name: Mark the DHCP post-install configuration as complete
+  ansible.windows.win_powershell:
+    script: |
+      $path = "HKLM:\SOFTWARE\Microsoft\ServerManager\Roles\12"
+      if (-not (Test-Path $path)) { New-Item -Path $path -Force | Out-Null }
+      $current = (Get-ItemProperty -Path $path -Name ConfigurationState -ErrorAction SilentlyContinue).ConfigurationState
+      if ($current -ne 2) {
+        Set-ItemProperty -Path $path -Name ConfigurationState -Value 2 -Type DWord
+        $Ansible.Changed = $true
+      } else {
+        $Ansible.Changed = $false
+      }
+
+- name: Create the client scope
+  ansible.windows.win_powershell:
+    parameters:
+      ScopeId: "{{ dhcp_scope_id }}"
+      Name: "{{ dhcp_scope_name }}"
+      SubnetMask: "{{ dhcp_subnet_mask }}"
+      StartRange: "{{ dhcp_start_range }}"
+      EndRange: "{{ dhcp_end_range }}"
+    script: |
+      param($ScopeId, $Name, $SubnetMask, $StartRange, $EndRange)
+      $scope = Get-DhcpServerv4Scope -ScopeId $ScopeId -ErrorAction SilentlyContinue
+      if (-not $scope) {
+        Add-DhcpServerv4Scope -Name $Name -StartRange $StartRange -EndRange $EndRange -SubnetMask $SubnetMask -State Active
+        $Ansible.Changed = $true
+      } else {
+        $Ansible.Changed = $false
+      }
+
+- name: Set scope options (router, DNS servers, DNS domain)
+  ansible.windows.win_powershell:
+    parameters:
+      ScopeId: "{{ dhcp_scope_id }}"
+      Router: "{{ dhcp_router }}"
+      DnsServers:
+        - "{{ dc01_private_ip }}"
+        - "{{ dc02_private_ip }}"
+      DnsDomain: "{{ domain_name }}"
+      LeaseDurationDays: "{{ dhcp_lease_duration_days }}"
+    script: |
+      param($ScopeId, $Router, $DnsServers, $DnsDomain, $LeaseDurationDays)
+      Set-DhcpServerv4OptionValue -ScopeId $ScopeId -Router $Router -DnsServer $DnsServers -DnsDomain $DnsDomain
+      Set-DhcpServerv4Scope -ScopeId $ScopeId -LeaseDuration ([TimeSpan]::FromDays($LeaseDurationDays))
+      $Ansible.Changed = $true

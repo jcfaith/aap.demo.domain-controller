@@ -1,0 +1,27 @@
+---
+- name: Confirm a target DC and role list were supplied
+  ansible.builtin.assert:
+    that:
+      - fsmo_target_dc is defined
+      - fsmo_roles_to_transfer | length > 0
+    fail_msg: "fsmo_target_dc and fsmo_roles_to_transfer must both be set."
+
+# Move-ADDirectoryServerOperationMasterRole with no -Force is a graceful
+# transfer - it requires the current role holder to be online and reachable.
+# -Force (a seize) is a DR-only operation and deliberately not wired up here;
+# see docs/fsmo_notes.md.
+- name: Transfer the requested FSMO role(s) to the target DC
+  run_once: true
+  delegate_to: "{{ dc01_name }}"
+  ansible.windows.win_powershell:
+    parameters:
+      TargetDc: "{{ fsmo_target_dc }}"
+      Roles: "{{ fsmo_roles_to_transfer }}"
+    script: |
+      param($TargetDc, $Roles)
+      Move-ADDirectoryServerOperationMasterRole -Identity $TargetDc -OperationMasterRole $Roles -Confirm:$false
+      $Ansible.Changed = $true
+
+- name: Pause briefly for AD replication of the role change to converge
+  ansible.builtin.pause:
+    seconds: 15

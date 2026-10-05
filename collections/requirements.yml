@@ -1,0 +1,12 @@
+---
+collections:
+  - name: amazon.aws
+    version: 9.3.0
+  - name: ansible.windows
+    version: 3.2.0
+  - name: community.windows
+    version: 3.0.1
+  - name: ansible.posix
+    version: 2.1.0
+  - name: ansible.utils
+    version: 6.0.0

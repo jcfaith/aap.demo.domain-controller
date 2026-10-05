@@ -1,0 +1,9 @@
+---
+- name: Report current FSMO role holders
+  hosts: tag_Environment_ad_demo
+  gather_facts: false
+
+  tasks:
+    - name: Include the fsmo_report role
+      ansible.builtin.include_role:
+        name: fsmo_report

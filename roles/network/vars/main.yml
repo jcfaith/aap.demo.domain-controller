@@ -1,0 +1,12 @@
+---
+network_name: addemo
+network_region: us-east-1
+network_cidr: 10.60.0.0/24
+network_alwaysup: false
+network_deleteby: service.ansible
+network_ec2_ansible_group: service.ansible
+network_my_email_address: service.ansible@redhat.com
+network_security_group_name: "{{ network_name }}_SECGRP"
+network_subnet_name: "{{ network_name }}_Subnet"
+network_rt_name: "{{ network_name }}_RT_Internet"
+network_igw_name: "{{ network_name }}_IGW"

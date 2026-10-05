@@ -1,0 +1,37 @@
+---
+# FSMO role placement isn't exposed by any Ansible module - query it with the
+# native AD cmdlets via ansible.windows.win_powershell and return it as structured data.
+- name: Query current FSMO role holders
+  run_once: true
+  delegate_to: "{{ dc01_name }}"
+  ansible.windows.win_powershell:
+    script: |
+      $forest = Get-ADForest
+      $domain = Get-ADDomain
+
+      $Ansible.Result = @{
+        schema_master      = $forest.SchemaMaster
+        domain_naming_master = $forest.DomainNamingMaster
+        pdc_emulator        = $domain.PDCEmulator
+        rid_master          = $domain.RIDMaster
+        infrastructure_master = $domain.InfrastructureMaster
+      }
+  register: fsmo_report_result
+
+- name: Share FSMO role holders with the rest of the workflow
+  ansible.builtin.set_stats:
+    data:
+      fsmo_schema_master: "{{ fsmo_report_result.result.schema_master }}"
+      fsmo_domain_naming_master: "{{ fsmo_report_result.result.domain_naming_master }}"
+      fsmo_pdc_emulator: "{{ fsmo_report_result.result.pdc_emulator }}"
+      fsmo_rid_master: "{{ fsmo_report_result.result.rid_master }}"
+      fsmo_infrastructure_master: "{{ fsmo_report_result.result.infrastructure_master }}"
+
+- name: Show the current FSMO role holders
+  ansible.builtin.debug:
+    msg:
+      - "Schema Master:          {{ fsmo_report_result.result.schema_master }}"
+      - "Domain Naming Master:    {{ fsmo_report_result.result.domain_naming_master }}"
+      - "PDC Emulator:            {{ fsmo_report_result.result.pdc_emulator }}"
+      - "RID Master:              {{ fsmo_report_result.result.rid_master }}"
+      - "Infrastructure Master:   {{ fsmo_report_result.result.infrastructure_master }}"

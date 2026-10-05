@@ -1,0 +1,9 @@
+---
+- name: Transfer FSMO roles to the target domain controller
+  hosts: tag_Environment_ad_demo
+  gather_facts: false
+
+  tasks:
+    - name: Include the fsmo_transfer role
+      ansible.builtin.include_role:
+        name: fsmo_transfer

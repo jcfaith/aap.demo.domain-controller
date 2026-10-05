@@ -1,0 +1,6 @@
+---
+# Overridden at the AAP workflow level (extra_vars) when run from AAP.
+# Defaults here only matter for standalone/local testing.
+domain_name: ad.demo.local
+domain_netbios_name: DEMOAD
+site_name: Default-First-Site-Name

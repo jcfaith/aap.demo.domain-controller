@@ -1,0 +1,9 @@
+---
+- name: Configure the DFS namespace and replication group
+  hosts: tag_Environment_ad_demo
+  gather_facts: false
+
+  tasks:
+    - name: Include the dfs_config role
+      ansible.builtin.include_role:
+        name: dfs_config

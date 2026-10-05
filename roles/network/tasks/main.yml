@@ -1,0 +1,226 @@
+---
+- name: Stuff we are always going to do
+  tags:
+    - always
+  block:
+
+    - name: Share network facts with other steps in the workflow
+      ansible.builtin.set_stats:
+        data:
+          network_name: "{{ network_name }}"
+          network_region: "{{ network_region }}"
+          network_cidr: "{{ network_cidr }}"
+
+- name: Creating a network container at Amazon for the AD demo
+  tags:
+    - create
+  block:
+
+    - name: Create VPC
+      register: my_vpc
+      amazon.aws.ec2_vpc_net:
+        name: "{{ network_name }}_{{ network_ec2_ansible_group }}"
+        cidr_block: "{{ network_cidr }}"
+        region: "{{ network_region }}"
+        state: present
+        tags:
+          AlwaysUp: "{{ network_alwaysup }}"
+          Name: "{{ network_name }}"
+          ansible_group: "{{ network_ec2_ansible_group }}"
+          Createdby: Ansible Controller
+          Contact: "{{ network_my_email_address }}"
+          DeleteBy: "{{ network_deleteby }}"
+
+    - name: Create security group
+      register: my_security_group
+      amazon.aws.ec2_security_group:
+        name: "{{ network_security_group_name }}"
+        description: Domain controller demo - WinRM/RDP open for management, AD service ports open within the VPC only
+        vpc_id: "{{ my_vpc.vpc.id }}"
+        region: "{{ network_region }}"
+        tags:
+          AlwaysUp: "{{ network_alwaysup }}"
+          Name: "{{ network_name }}"
+          ansible_group: "{{ network_ec2_ansible_group }}"
+          Createdby: Ansible Controller
+          Contact: "{{ network_my_email_address }}"
+          DeleteBy: "{{ network_deleteby }}"
+        rules:
+          - proto: icmp
+            from_port: 8
+            to_port: -1
+            cidr_ip: 0.0.0.0/0
+            rule_desc: allow ping
+          - proto: tcp
+            ports: 3389
+            cidr_ip: 0.0.0.0/0
+            rule_desc: RDP for admin access
+          - proto: tcp
+            ports: 5985-5986
+            cidr_ip: 0.0.0.0/0
+            rule_desc: WinRM for AAP
+          # AD service ports - scoped to the VPC CIDR only, not the open internet
+          - proto: tcp
+            ports: 53
+            cidr_ip: "{{ network_cidr }}"
+            rule_desc: DNS (TCP)
+          - proto: udp
+            ports: 53
+            cidr_ip: "{{ network_cidr }}"
+            rule_desc: DNS (UDP)
+          - proto: udp
+            ports: 67-68
+            cidr_ip: "{{ network_cidr }}"
+            rule_desc: DHCP
+          - proto: tcp
+            ports: 88
+            cidr_ip: "{{ network_cidr }}"
+            rule_desc: Kerberos (TCP)
+          - proto: udp
+            ports: 88
+            cidr_ip: "{{ network_cidr }}"
+            rule_desc: Kerberos (UDP)
+          - proto: tcp
+            ports: 135
+            cidr_ip: "{{ network_cidr }}"
+            rule_desc: RPC endpoint mapper
+          - proto: tcp
+            ports: 389
+            cidr_ip: "{{ network_cidr }}"
+            rule_desc: LDAP (TCP)
+          - proto: udp
+            ports: 389
+            cidr_ip: "{{ network_cidr }}"
+            rule_desc: LDAP (UDP)
+          - proto: tcp
+            ports: 445
+            cidr_ip: "{{ network_cidr }}"
+            rule_desc: SMB
+          - proto: tcp
+            ports: 464
+            cidr_ip: "{{ network_cidr }}"
+            rule_desc: Kerberos kpasswd (TCP)
+          - proto: udp
+            ports: 464
+            cidr_ip: "{{ network_cidr }}"
+            rule_desc: Kerberos kpasswd (UDP)
+          - proto: tcp
+            ports: 636
+            cidr_ip: "{{ network_cidr }}"
+            rule_desc: LDAPS
+          - proto: tcp
+            ports: 3268-3269
+            cidr_ip: "{{ network_cidr }}"
+            rule_desc: Global Catalog
+          - proto: tcp
+            ports: 49152-65535
+            cidr_ip: "{{ network_cidr }}"
+            rule_desc: Dynamic RPC (AD replication, DFS-R)
+
+    - name: Create subnet
+      register: my_vpc_subnet
+      amazon.aws.ec2_vpc_subnet:
+        state: present
+        vpc_id: "{{ my_vpc.vpc.id }}"
+        cidr: "{{ network_cidr }}"
+        region: "{{ network_region }}"
+        map_public: true
+        tags:
+          AlwaysUp: "{{ network_alwaysup }}"
+          Name: "{{ network_subnet_name }}"
+          ansible_group: "{{ network_ec2_ansible_group }}"
+          Createdby: Ansible Controller
+          Contact: "{{ network_my_email_address }}"
+          DeleteBy: "{{ network_deleteby }}"
+
+    - name: Create IGW
+      register: my_igw
+      amazon.aws.ec2_vpc_igw:
+        vpc_id: "{{ my_vpc.vpc.id }}"
+        region: "{{ network_region }}"
+        state: present
+        tags:
+          Name: "{{ network_igw_name }}"
+          ansible_group: "{{ network_ec2_ansible_group }}"
+          Createdby: Ansible Controller
+          Contact: "{{ network_my_email_address }}"
+          DeleteBy: "{{ network_deleteby }}"
+
+    - name: Create Internet route table
+      amazon.aws.ec2_vpc_route_table:
+        vpc_id: "{{ my_vpc.vpc.id }}"
+        region: "{{ network_region }}"
+        tags:
+          AlwaysUp: "{{ network_alwaysup }}"
+          Name: "{{ network_rt_name }}"
+          ansible_group: "{{ network_ec2_ansible_group }}"
+          Createdby: Ansible Controller
+          Contact: "{{ network_my_email_address }}"
+          DeleteBy: "{{ network_deleteby }}"
+        subnets:
+          - "{{ my_vpc_subnet.subnet.id }}"
+        routes:
+          - dest: "0.0.0.0/0"
+            gateway_id: "{{ my_igw.gateway_id }}"
+
+- name: Removing the network container at Amazon
+  tags:
+    - remove
+  block:
+
+    - name: Get VPC_ID
+      check_mode: true
+      register: my_vpc
+      amazon.aws.ec2_vpc_net:
+        name: "{{ network_name }}_{{ network_ec2_ansible_group }}"
+        cidr_block: "{{ network_cidr }}"
+        region: "{{ network_region }}"
+        state: present
+
+    - name: End play - nothing to remove
+      when: my_vpc.vpc.id is not defined
+      ansible.builtin.meta: end_play
+
+    - name: Remove IGW
+      amazon.aws.ec2_vpc_igw:
+        vpc_id: "{{ my_vpc.vpc.id }}"
+        region: "{{ network_region }}"
+        state: absent
+
+    - name: Remove subnet
+      amazon.aws.ec2_vpc_subnet:
+        state: absent
+        vpc_id: "{{ my_vpc.vpc.id }}"
+        cidr: "{{ network_cidr }}"
+        region: "{{ network_region }}"
+
+    - name: Gather route table IDs
+      register: inet_route_table
+      amazon.aws.ec2_vpc_route_table_info:
+        region: "{{ network_region }}"
+        filters:
+          tag:Name: "{{ network_rt_name }}"
+          vpc-id: "{{ my_vpc.vpc.id }}"
+
+    - name: Remove route table
+      when: inet_route_table.route_tables | length > 0
+      amazon.aws.ec2_vpc_route_table:
+        vpc_id: "{{ my_vpc.vpc.id }}"
+        region: "{{ network_region }}"
+        route_table_id: "{{ inet_route_table.route_tables[0].id }}"
+        lookup: id
+        state: absent
+
+    - name: Remove security group
+      amazon.aws.ec2_security_group:
+        name: "{{ network_security_group_name }}"
+        vpc_id: "{{ my_vpc.vpc.id }}"
+        region: "{{ network_region }}"
+        state: absent
+
+    - name: Remove VPC
+      amazon.aws.ec2_vpc_net:
+        name: "{{ network_name }}_{{ network_ec2_ansible_group }}"
+        cidr_block: "{{ network_cidr }}"
+        region: "{{ network_region }}"
+        state: absent

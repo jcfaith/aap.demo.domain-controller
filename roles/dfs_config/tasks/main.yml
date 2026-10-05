@@ -1,0 +1,94 @@
+---
+# Each DC gets a local folder + SMB share to serve as its DFS replication member.
+- name: Create the local DFS folder
+  ansible.windows.win_file:
+    path: "{{ dfs_share_path }}"
+    state: directory
+
+- name: Share the DFS folder over SMB
+  community.windows.win_share:
+    name: "{{ dfs_share_name }}"
+    path: "{{ dfs_share_path }}"
+    full: Everyone
+    state: present
+
+# Namespace + replication group are domain-wide objects - no need to create them
+# twice, so the rest of this role runs once, delegated to the forest root DC.
+# There's no Ansible module for DFS Namespaces or DFS Replication, so we wrap the
+# native cmdlets with ansible.windows.win_powershell, same pattern as dns_config/dhcp_config.
+
+- name: Create the domain-based DFS namespace (run once, from dc01)
+  run_once: true
+  delegate_to: "{{ dc01_name }}"
+  ansible.windows.win_powershell:
+    parameters:
+      NamespacePath: "\\\\{{ domain_name }}\\{{ dfs_namespace_name }}"
+      TargetPath: "\\\\{{ dc01_name }}\\{{ dfs_share_name }}"
+    script: |
+      param($NamespacePath, $TargetPath)
+      $root = Get-DfsnRoot -Path $NamespacePath -ErrorAction SilentlyContinue
+      if (-not $root) {
+        New-DfsnRoot -Path $NamespacePath -TargetPath $TargetPath -Type DomainV2
+        $Ansible.Changed = $true
+      } else {
+        $Ansible.Changed = $false
+      }
+
+- name: Add dc02 as a second namespace target (run once, from dc01)
+  run_once: true
+  delegate_to: "{{ dc01_name }}"
+  ansible.windows.win_powershell:
+    parameters:
+      NamespacePath: "\\\\{{ domain_name }}\\{{ dfs_namespace_name }}"
+      TargetPath: "\\\\{{ dc02_name }}\\{{ dfs_share_name }}"
+    script: |
+      param($NamespacePath, $TargetPath)
+      $target = Get-DfsnRootTarget -Path $NamespacePath -TargetPath $TargetPath -ErrorAction SilentlyContinue
+      if (-not $target) {
+        New-DfsnRootTarget -Path $NamespacePath -TargetPath $TargetPath
+        $Ansible.Changed = $true
+      } else {
+        $Ansible.Changed = $false
+      }
+
+- name: Create the replication group between dc01 and dc02 (run once, from dc01)
+  run_once: true
+  delegate_to: "{{ dc01_name }}"
+  ansible.windows.win_powershell:
+    parameters:
+      GroupName: "{{ dfs_replication_group_name }}"
+      FolderName: "{{ dfs_replicated_folder_name }}"
+      Dc01: "{{ dc01_name }}"
+      Dc02: "{{ dc02_name }}"
+      ContentPath: "{{ dfs_share_path }}"
+    script: |
+      param($GroupName, $FolderName, $Dc01, $Dc02, $ContentPath)
+
+      $rg = Get-DfsReplicationGroup -GroupName $GroupName -ErrorAction SilentlyContinue
+      if (-not $rg) {
+        New-DfsReplicationGroup -GroupName $GroupName | Out-Null
+        $Ansible.Changed = $true
+      }
+
+      $rf = Get-DfsReplicatedFolder -GroupName $GroupName -FolderName $FolderName -ErrorAction SilentlyContinue
+      if (-not $rf) {
+        New-DfsReplicatedFolder -GroupName $GroupName -FolderName $FolderName | Out-Null
+        $Ansible.Changed = $true
+      }
+
+      foreach ($member in @($Dc01, $Dc02)) {
+        $existing = Get-DfsrMember -GroupName $GroupName -ComputerName $member -ErrorAction SilentlyContinue
+        if (-not $existing) {
+          Add-DfsrMember -GroupName $GroupName -ComputerName $member
+          $Ansible.Changed = $true
+        }
+      }
+
+      Set-DfsrMembership -GroupName $GroupName -FolderName $FolderName -ComputerName $Dc01 -ContentPath $ContentPath -PrimaryMember $true -Force
+      Set-DfsrMembership -GroupName $GroupName -FolderName $FolderName -ComputerName $Dc02 -ContentPath $ContentPath -Force
+
+      $conn = Get-DfsrConnection -GroupName $GroupName -SourceComputerName $Dc01 -DestinationComputerName $Dc02 -ErrorAction SilentlyContinue
+      if (-not $conn) {
+        Add-DfsrConnection -GroupName $GroupName -SourceComputerName $Dc01 -DestinationComputerName $Dc02
+        $Ansible.Changed = $true
+      }

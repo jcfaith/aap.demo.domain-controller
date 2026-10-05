@@ -1,0 +1,28 @@
+---
+authors:
+  - jcfaith
+dependencies:
+  "ansible.windows": ">=3.2.0"
+  "amazon.aws": ">=9.3.0"
+  "ansible.posix": ">=2.1.0"
+  "ansible.utils": ">=6.0.0"
+  "community.windows": ">=3.0.1"
+  "infra.aap_configuration": ">=3.8.0"
+license_file: LICENSE
+name: domain_controller_demo
+description: Deploy and operate a Windows Active Directory domain controller pair with AAP.
+namespace: jcfaith
+readme: README.md
+repository: https://github.com/jcfaith/aap.demo.domain-controller
+issues: https://github.com/jcfaith/aap.demo.domain-controller/issues
+tags:
+  - lab
+  - cloud
+  - amazon
+  - aws
+  - windows
+  - activedirectory
+  - ansible
+  - automation
+  - sales
+version: 1.0.0

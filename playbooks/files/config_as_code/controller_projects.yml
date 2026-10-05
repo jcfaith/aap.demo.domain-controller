@@ -1,0 +1,16 @@
+---
+aap_organizations:
+  - name: "{{ my_organization }}"
+    description: Owns everything created by the DC deployment demo
+
+controller_projects:
+  - name: aap.demo.domain-controller
+    organization: "{{ my_organization }}"
+    description: Domain controller deployment and AD operations demo
+    scm_type: git
+    scm_url: "{{ my_project_scm_url }}"
+    scm_branch: main
+    scm_update_on_launch: false
+    default_environment: Default execution environment
+    wait: true
+    update_project: true
