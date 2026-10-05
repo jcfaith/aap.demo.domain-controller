@@ -2,6 +2,31 @@
 controller_workflows:
   - name: DC Deployment & AD Operations
     organization: "{{ my_organization }}"
+    survey_enabled: true
+    survey_spec:
+      name: ""
+      description: ""
+      spec:
+        - name: Target domain controller
+          type: text
+          question_name: Which DC should receive the FSMO role(s)?
+          question_description: Asked here at workflow launch and passed down to the FSMO Transfer step. Hostname as it appears in AAP inventory (e.g. dc02)
+          variable: fsmo_target_dc
+          required: true
+          default: dc02
+        - name: Roles to transfer
+          type: multiselect
+          question_name: Which FSMO role(s) should move?
+          question_description: Select one or more
+          variable: fsmo_roles_to_transfer
+          required: true
+          default: PDCEmulator
+          choices:
+            - PDCEmulator
+            - RIDMaster
+            - InfrastructureMaster
+            - SchemaMaster
+            - DomainNamingMaster
     related:
       workflow_nodes:
 

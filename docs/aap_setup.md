@@ -48,7 +48,7 @@ If it doesn't, build a custom EE (`ansible-builder`) with those added and point 
 
 ## 4. Launch
 
-Launch the **DC Deployment & AD Operations** workflow template. It will ask for nothing by default; `domain_name`/`domain_netbios_name` are already set on `DC - 04 Promote Forest Root` (edit that job template's extra vars to change them). The FSMO transfer step has its own survey (which role(s), which target DC) and sits behind a manual approval node.
+Launch the **DC Deployment & AD Operations** workflow template. `domain_name`/`domain_netbios_name` are already set on `DC - 04 Promote Forest Root` (edit that job template's extra vars to change them). It opens with a short survey (which FSMO role(s) to move, which target DC) - the answers are passed down to the FSMO transfer step, which sits behind a manual approval node. `DC - 10 FSMO Transfer` keeps the same survey for when you run it on its own.
 
 ## 5. Tear down
 

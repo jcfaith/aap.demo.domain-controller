@@ -17,7 +17,7 @@ Launch **DC Deployment & AD Operations** and narrate as it progresses - don't ju
 5. **Configure DNS / DHCP / DFS** - "Here's an honest point worth making explicitly: there is no Ansible module for DHCP scopes, DFS namespaces, or FSMO. AAP wraps your existing PowerShell - `Add-DhcpServerv4Scope`, `New-DfsReplicationGroup`, `Move-ADDirectoryServerOperationMasterRole` - with credentials, logging, and access control around it. It's not replacing your AD knowledge, it's operationalizing it."
 6. **FSMO Report** - shows current role placement (all 5 on dc01).
 7. **Approval node** - the workflow stops here. "This is a manual gate. Someone has to click Approve before the FSMO transfer runs - same as it would in change management today, except now it's enforced by the platform, not by someone remembering to ask."
-8. **FSMO Transfer** - survey asks which role(s) and which target DC at launch time; approve, and watch it move.
+8. **FSMO Transfer** - uses the role(s) and target DC you picked in the survey at workflow launch; approve, and watch it move.
 9. **FSMO Report (again)** - "Same report, same job template, run again - and now PDC Emulator (or whichever role you picked) shows dc02. That's not us telling you it worked. That's AD telling you."
 
 ## The credential/permissions conversation (the actual point of this demo)
