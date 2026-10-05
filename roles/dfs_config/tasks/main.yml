@@ -44,10 +44,14 @@
     parameters:
       NamespacePath: "\\\\{{ domain_name }}\\{{ dfs_namespace_name }}"
       TargetPath: "\\\\{{ dc02_name }}\\{{ dfs_share_name }}"
+      TargetHost: "{{ dc02_name }}"
     script: |
-      param($NamespacePath, $TargetPath)
+      param($NamespacePath, $TargetPath, $TargetHost)
       $ErrorActionPreference = 'Stop'
-      $target = Get-DfsnRootTarget -Path $NamespacePath -TargetPath $TargetPath -ErrorAction SilentlyContinue
+      # DFS may store the target under the short or the FQDN host name, so
+      # match on the host rather than the exact path.
+      $target = Get-DfsnRootTarget -Path $NamespacePath -ErrorAction SilentlyContinue |
+        Where-Object { $_.TargetPath -like "\\$TargetHost\*" -or $_.TargetPath -like "\\$TargetHost.*" }
       if (-not $target) {
         New-DfsnRootTarget -Path $NamespacePath -TargetPath $TargetPath
         $Ansible.Changed = $true
