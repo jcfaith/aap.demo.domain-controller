@@ -14,9 +14,13 @@ reg delete "HKLM\SOFTWARE\Policies\Microsoft\Windows\WinRM\Service" /v DisableRu
 Set-MpPreference -DisableRealtimeMonitoring $true
 Set-NetFirewallProfile Domain,Public,Private -Enabled false
 
-# Enable WinRM over HTTPS with CredSSP
-Invoke-WebRequest -Uri https://raw.githubusercontent.com/ansible/ansible-documentation/devel/examples/scripts/ConfigureRemotingForAnsible.ps1 -OutFile C:\ConfigureRemotingForAnsible.ps1
-C:\ConfigureRemotingForAnsible.ps1 -ForceNewSSLCert -EnableCredSSP
+# Enable WinRM over HTTPS with CredSSP. Done inline rather than downloading a
+# helper script, so it can't fail if the instance has no outbound internet yet.
+Enable-PSRemoting -Force -SkipNetworkProfileCheck
+$Cert = New-SelfSignedCertificate -DnsName $env:COMPUTERNAME -CertStoreLocation Cert:\LocalMachine\My
+Get-ChildItem WSMan:\localhost\Listener | Where-Object { $_.Keys -contains "Transport=HTTPS" } | Remove-Item -Recurse -Force
+New-Item -Path WSMan:\localhost\Listener -Transport HTTPS -Address * -CertificateThumbPrint $Cert.Thumbprint -Force
+Enable-WSManCredSSP -Role Server -Force
 
 # Set the password on the built-in local Administrator account and make sure
 # it's enabled. This - not a custom local account - is deliberate: local SAM

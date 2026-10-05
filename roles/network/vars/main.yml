@@ -2,7 +2,9 @@
 network_name: addemo
 network_region: us-east-1
 network_cidr: 10.60.0.0/24
-network_alwaysup: false
+# String, not a bool - AWS stores tags as strings, and the route table lookup
+# matches on tags, so a bool here never matches and creates a duplicate table.
+network_alwaysup: "false"
 network_deleteby: service.ansible
 network_ec2_ansible_group: service.ansible
 network_my_email_address: service.ansible@redhat.com

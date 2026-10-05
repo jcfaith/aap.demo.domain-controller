@@ -147,6 +147,7 @@
           DeleteBy: "{{ network_deleteby }}"
 
     - name: Create Internet route table
+      register: network_route_table
       amazon.aws.ec2_vpc_route_table:
         vpc_id: "{{ my_vpc.vpc.id }}"
         region: "{{ network_region }}"
@@ -162,6 +163,20 @@
         routes:
           - dest: "0.0.0.0/0"
             gateway_id: "{{ my_igw.gateway_id }}"
+
+    # The create call above doesn't reliably associate the subnet on a fresh
+    # table, which leaves the subnet on the VPC's local-only main route table
+    # and the instances unreachable. Associate it explicitly by id.
+    - name: Associate the subnet with the Internet route table
+      amazon.aws.ec2_vpc_route_table:
+        vpc_id: "{{ my_vpc.vpc.id }}"
+        region: "{{ network_region }}"
+        route_table_id: "{{ network_route_table.route_table.id }}"
+        lookup: id
+        subnets:
+          - "{{ my_vpc_subnet.subnet.id }}"
+        purge_routes: false
+        purge_tags: false
 
 - name: Removing the network container at Amazon
   tags:
