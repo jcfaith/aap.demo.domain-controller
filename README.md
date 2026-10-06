@@ -9,8 +9,6 @@ This repo builds a working two-server Active Directory domain in AWS and then ru
 - Reports which DC holds each FSMO role, waits for a person to approve, transfers the role(s) you picked, and reports again to prove it moved
 - Tears the whole thing down again when you're finished, so you only pay for AWS while you're using it
 
-You don't need any prior AAP experience to follow this guide. Plan on about **30 minutes of setup** and then about **an hour** for the first build to run.
-
 ---
 
 ## Contents
