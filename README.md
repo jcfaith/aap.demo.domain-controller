@@ -225,7 +225,7 @@ When you're done, go to **Templates** and launch **DC - Teardown**. It removes e
 
 It only touches resources tagged `Environment: ad-demo` or inside the demo's `addemo` VPC. It's safe to run at any time, even if a build only got halfway or everything is already gone.
 
-**Safety net:** the `DC - Nightly Teardown` schedule runs `DC - Teardown` every night at **11 PM US Pacific**. If you want the environment to survive overnight (for example, you build the evening before a morning session), turn that schedule off under **Automation Execution → Schedules**, and turn it back on afterwards. To use a different time zone or time, see [section 9](#9-changing-the-defaults).
+**Safety net:** the `DC - Nightly Teardown` schedule runs `DC - Teardown` every night at **11 PM US Pacific**. If you want the environment to survive overnight, turn that schedule off under **Automation Execution → Schedules**, and turn it back on afterwards. To use a different time zone or time, see [section 9](#9-changing-the-defaults).
 
 ---
 
@@ -239,8 +239,6 @@ The whole demo is designed to be rebuilt as often as you like:
 Every step checks what already exists before changing anything. That means you can also relaunch the workflow against an environment that's already built, or one where a run stopped halfway. It skips what's done and carries on from there.
 
 Each step is also its own job template, so you can rerun just one: for example, `DC - 10 FSMO Transfer` with target `dc01` to move the PDC Emulator back.
-
-> **Tip for a live session:** the full build takes about an hour, so start it beforehand. Remember the approval waits one hour. Either time the build so the approval opens shortly before your session, or narrate steps 01-09 from the completed job output and do the approval live.
 
 ---
 
