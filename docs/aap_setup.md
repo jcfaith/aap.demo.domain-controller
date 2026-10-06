@@ -1,79 +1,39 @@
-# AAP setup
+# Extra setup notes
 
-## 0. Prerequisites on your control node (not inside AAP)
+The step-by-step setup is in the [README](../README.md). This page covers the details behind it.
 
-```
-ansible-galaxy collection install -r collections/requirements.yml
-ansible-galaxy collection install infra.aap_configuration
-ansible-galaxy collection install ansible.platform ansible.controller   # from Automation Hub (console.redhat.com token in ansible.cfg)
-```
+## Why the setup collections aren't in `collections/requirements.yml`
 
-`ansible.platform` and `ansible.controller` are Red Hat certified collections - they come from Automation Hub, not public Galaxy. `infra.aap_configuration` and those two are only needed for the one-time setup below - they are deliberately not in `collections/requirements.yml`, so they never have to sync onto the AAP execution environment.
+`ansible.platform`, `ansible.controller` and `infra.aap_configuration` are only used by `setup_demo.yml`, which runs once from your workstation and talks to the AAP API. Keeping them out of `collections/requirements.yml` means AAP never has to download them when it syncs the project, and the project sync doesn't need Automation Hub credentials.
 
-## 1. Set environment variables for the setup playbook
+## Execution environment
 
-Pick one strong password for the domain. It becomes the built-in local `Administrator` password on both instances, the DSRM (safe mode) password, and - after dcpromo - the domain `Administrator` password (see `roles/dc_instances/scripts/aws_userdata` and `docs/architecture.md` for why these are one secret). It is only ever stored in AAP credentials; nothing secret is committed to this repo.
+The job templates use AAP's built-in **Default execution environment** (`ee-supported`). On AAP 2.5 and newer it already includes everything the demo needs: `ansible.windows`, `microsoft.ad`, `amazon.aws`, `pywinrm` with CredSSP support, and `boto3`. Collections listed in `collections/requirements.yml` are installed on top at project sync time.
 
-```
-export CONTROLLER_HOST=https://aap-aap.apps.<your-cluster>
-export CONTROLLER_USERNAME=admin
-export CONTROLLER_PASSWORD='...'
-export AWS_ACCESS_KEY_ID='...'
-export AWS_SECRET_ACCESS_KEY='...'
-export DC_ADMIN_PASSWORD='...'
-```
+If your AAP uses a different default EE and jobs fail with `pywinrm`, `credssp` or `boto3` import errors, build a custom EE with `ansible-builder` that adds those Python packages. Then set `execution_environment` on each template in `playbooks/files/config_as_code/controller_templates.yml` to its name and rerun `setup_demo.yml`.
 
-## 2. Run setup
+## Credentials and the domain password
 
-From your control node (not inside AAP - this talks to the AAP API directly):
+One password (`DC_ADMIN_PASSWORD`) is used in three places, because Windows makes them the same account:
 
-```
-ansible-playbook playbooks/setup_demo.yml
-```
+- It's set on the built-in local `Administrator` account at first boot (`roles/dc_instances/scripts/aws_userdata`).
+- Promoting `dc01` turns that local account into the domain `Administrator`, so it's also the domain admin password.
+- It's used as the DSRM (safe mode) password during promotion.
 
-If you forked this repo, override the project URL: `-e my_project_scm_url=https://github.com/<you>/aap.demo.domain-controller.git`.
+AAP holds it in three credentials:
 
-This creates the `IT Service Automation` organization, the `aap.demo.domain-controller` project (and syncs it), the `AD Domain Secrets` credential type, the credentials (`DC Demo AWS`, `DC Build Admin`, `DC Operations Admin`, `AD Domain Secrets`), the `DC Demo Inventory` with its AWS EC2 dynamic source, every job template, the `DC Deployment & AD Operations` workflow, and the `Platform-Eng`/`AD-Ops` teams with their role grants.
+| Credential | Used by | Logs in as |
+|---|---|---|
+| `DC Build Admin` | 02-05 | `Administrator` (local, before the domain exists) |
+| `DC Operations Admin` | 06-10 | `DEMOAD\Administrator` (domain-qualified, so steps that reach the other DC authenticate correctly) |
+| `AD Domain Secrets` | 04, 05 | not a login: hands `safe_mode_password` and `domain_admin_password` to the promotion steps as variables |
 
-## 3. Execution environment
+The build and operations credentials hold the same secret today but are separate AAP objects, so access to each can be granted to a different team and revoked or rotated independently.
 
-Everything here targets Windows over WinRM and AWS over the `amazon.aws` collection. Check whether **Default execution environment** on your AAP instance already has `pywinrm`, `pyspnego`/`requests-credssp`, and `amazon.aws`'s Python deps (`boto3`/`botocore`) installed:
+## Teams and permissions
 
-```
-# from a job run against any job template, check the job output for
-# "pywinrm" / "boto3" import errors, or inspect the EE image directly
-```
+`playbooks/files/config_as_code/controller_teams_roles.yml` grants `Platform-Eng` admin on templates 01-05, the workflow and teardown, and `AD-Ops` execute on templates 06-10. The field names (`aap_teams`, `controller_roles`) match `infra.aap_configuration` 4.x. If you use a different major version and `setup_demo.yml` errors on that file, check the collection's README for the current names.
 
-If it doesn't, build a custom EE (`ansible-builder`) with those added and point the job templates at it instead of `Default execution environment` in `playbooks/files/config_as_code/controller_templates.yml`, then re-run `setup_demo.yml`.
+## Rerunning setup
 
-## 4. Launch
-
-Launch the **DC Deployment & AD Operations** workflow template. `domain_name`/`domain_netbios_name` are already set on `DC - 04 Promote Forest Root` (edit that job template's extra vars to change them). It opens with a short survey (which FSMO role(s) to move, which target DC) - the answers are passed down to the FSMO transfer step, which sits behind a manual approval node. `DC - 10 FSMO Transfer` keeps the same survey for when you run it on its own.
-
-## 5. Tear down
-
-Run the **DC - Teardown** job template when you're done. It removes everything the demo created in AWS:
-
-- both domain controller instances (any state - pending, running, stopping, stopped), waiting until they are fully terminated
-- every route table, the internet gateway, the subnet, and the security group
-- the VPC itself
-
-Nothing outside the demo's `addemo` VPC and `Environment: ad-demo` tag is touched. It is safe to run at any time, including when the environment is half-built or already gone - each step skips what isn't there.
-
-**Nightly safety net:** `setup_demo.yml` also creates a **DC - Nightly Teardown** schedule that runs DC - Teardown every day at 11 PM Pacific. If you need the DCs to survive overnight (e.g. building the night before a morning demo), toggle that schedule off under **Schedules** and turn it back on afterwards.
-
-## 6. Running the demo again
-
-The demo is designed to be rebuilt from scratch as often as you like:
-
-1. Run **DC - Teardown** (or let the nightly schedule do it).
-2. Launch **DC Deployment & AD Operations** again.
-
-Every step is idempotent, so re-launching the workflow against an environment that already exists is also safe - it skips what's already built and picks up where a failed run stopped. The EC2 inventory refreshes on every launch, so terminated hosts drop out of `DC Demo Inventory` automatically.
-
-Build time from nothing to the FSMO approval gate is roughly 45-60 minutes; for a live customer session, build it beforehand and start the narration from the FSMO report.
-
-## Validating the RBAC/credential config
-
-- Log in as a user on the `AD-Ops` team only. Confirm you can launch `DC - 06 Configure DNS` through `DC - 10 FSMO Transfer`, and that `DC - 01` through `DC - 05` and `DC - Teardown` are not launchable.
-- `controller_teams_roles.yml`'s exact field names (`aap_teams`, `controller_roles`, its `job_templates`/`role` keys) should be checked against whatever version of `infra.aap_configuration` you installed - role-module schemas have shifted between major versions. If `setup_demo.yml` errors on that file, check `ansible-doc -t role infra.aap_configuration.roles` (or the collection's README) and adjust the keys to match.
+`setup_demo.yml` is safe to rerun. It updates anything that differs from the files in `config_as_code/` and leaves everything else alone. Rerun it after changing anything in that folder, or to reset a template someone edited by hand in the UI.

@@ -27,7 +27,7 @@
           - "One or more required environment variables are missing."
           - "Required: CONTROLLER_HOST, CONTROLLER_USERNAME, CONTROLLER_PASSWORD,"
           - "AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, DC_ADMIN_PASSWORD"
-          - "See docs/aap_setup.md."
+          - "See README.md, step 4.2."
 
     - name: Create a temporary AAP token
       ansible.platform.token:

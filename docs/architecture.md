@@ -30,7 +30,7 @@ Both instances are public (`assign_public_ip: true`) so AAP, which runs outside 
   -> 04 Promote Forest Root (dc01 creates the forest)
   -> 05 Promote Additional DC (dc02 joins, becomes a second DC)
   -> 06 Configure DNS (forwarders + sample records)
-  -> 07 Configure DHCP (dc01 only - see docs/aap_setup.md)
+  -> 07 Configure DHCP (dc01 only - see playbooks/07_configure_dhcp.yml)
   -> 08 Configure DFS (namespace + replication group)
   -> 09 FSMO Report (who holds what, before)
   -> [Approval: "Approve FSMO Transfer"]
@@ -46,10 +46,10 @@ One AAP workflow template runs this whole sequence end to end. Each step is also
 |---|---|---|---|
 | `DC Demo AWS` | Amazon Web Services | 01, 02, Teardown | n/a |
 | `DC Build Admin` | Machine | 02-05 | local `Administrator` on each EC2 instance |
-| `DC Operations Admin` | Machine | 06-10 | the domain `Administrator` account (same password as above, but a distinct AAP credential object) |
+| `DC Operations Admin` | Machine | 06-10 | `DEMOAD\Administrator`, the domain account (same password as above, but a distinct AAP credential object) |
 | `AD Domain Secrets` | AD Domain Secrets (custom type) | 04, 05 | injects `safe_mode_password` and `domain_admin_password` as extra vars at run time |
 
-See `docs/fsmo_notes.md` and `docs/aap_setup.md` for why the build/ops split is real (scoping, not cosmetic) and how the secrets are generated and never committed to git.
+See `docs/aap_setup.md` and `docs/fsmo_notes.md` for why the build/ops split is real (scoping, not cosmetic) and how the secrets are generated and never committed to git.
 
 ## RBAC model
 

@@ -30,7 +30,8 @@ Enable-WSManCredSSP -Role Server -Force
 # AAP ever needing to juggle a second local account. The password comes from
 # the AAP "Local Administrator" machine credential - it is injected at job
 # run time and never appears in this repo.
-$Password = ConvertTo-SecureString "{{ ansible_password }}" -AsPlainText -Force
+# Single-quoted so PowerShell never expands a $ or backtick in the password.
+$Password = ConvertTo-SecureString '{{ ansible_password | replace("'", "''") }}' -AsPlainText -Force
 Get-LocalUser -Name "Administrator" | Set-LocalUser -Password $Password -PasswordNeverExpires $true
 Enable-LocalUser -Name "Administrator"
 

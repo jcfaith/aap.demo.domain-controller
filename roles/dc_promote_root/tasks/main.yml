@@ -6,7 +6,7 @@
       - safe_mode_password | length > 0
     fail_msg: >-
       safe_mode_password is not set. It must come from the "AD Domain Secrets"
-      credential attached to this job template - see docs/aap_setup.md.
+      credential attached to this job template - rerun setup_demo.yml (see README step 4).
 
 - name: Create the new forest and promote this host to the forest root domain controller
   no_log: true
