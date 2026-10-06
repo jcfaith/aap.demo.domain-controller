@@ -46,7 +46,7 @@ controller_templates:
       - "{{ my_domain_secrets_credential }}"
     extra_vars:
       domain_name: ad.demo.local
-      domain_netbios_name: DEMOAD
+      domain_netbios_name: "{{ my_domain_netbios_name }}"
 
   - name: DC - 05 Promote Additional DC
     job_type: run

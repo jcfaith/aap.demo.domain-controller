@@ -53,7 +53,17 @@
       $target = Get-DfsnRootTarget -Path $NamespacePath -ErrorAction SilentlyContinue |
         Where-Object { $_.TargetPath -like "\\$TargetHost\*" -or $_.TargetPath -like "\\$TargetHost.*" }
       if (-not $target) {
-        New-DfsnRootTarget -Path $NamespacePath -TargetPath $TargetPath
+        # New-DfsnRootTarget often creates the target and then errors with
+        # "object could not be found" while reading it back. Only fail if the
+        # target really isn't there afterwards.
+        try {
+          New-DfsnRootTarget -Path $NamespacePath -TargetPath $TargetPath | Out-Null
+        } catch {
+          Start-Sleep -Seconds 10
+          $created = Get-DfsnRootTarget -Path $NamespacePath -ErrorAction SilentlyContinue |
+            Where-Object { $_.TargetPath -like "\\$TargetHost\*" -or $_.TargetPath -like "\\$TargetHost.*" }
+          if (-not $created) { throw }
+        }
         $Ansible.Changed = $true
       } else {
         $Ansible.Changed = $false

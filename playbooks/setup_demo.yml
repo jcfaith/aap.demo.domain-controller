@@ -9,6 +9,7 @@
     my_build_credential: DC Build Admin
     my_ops_credential: DC Operations Admin
     my_domain_secrets_credential: AD Domain Secrets
+    my_domain_netbios_name: DEMOAD
     my_project_scm_url: https://github.com/jcfaith/aap.demo.domain-controller.git
 
   tasks:
