@@ -175,18 +175,20 @@ Log in to the AAP web UI. Most of these are under **Automation Execution** in th
 
 | Step | What it does | Roughly |
 |---|---|---|
-| 01 Provision Network | Creates a VPC, subnet, internet gateway, route table and security group. AD ports are open only inside the VPC. | 1 min |
-| 02 Provision DC Instances | Launches `dc01` (10.60.0.10) and `dc02` (10.60.0.11) and waits for WinRM | 5-10 min |
-| 03 Install AD Roles | Renames the servers to `dc01`/`dc02`, installs AD DS, DNS, DHCP, DFS and the RSAT tools, rebooting as needed | 10 min |
-| 04 Promote Forest Root | `dc01` creates the `ad.demo.local` forest | 10 min |
-| 05 Promote Additional DC | `dc02` joins the domain and becomes a second DC | 10 min |
-| 06 Configure DNS | Sets forwarders and adds sample A records | 1 min |
-| 07 Configure DHCP | Authorizes `dc01` in AD and creates a scope with router/DNS options | 1 min |
-| 08 Configure DFS | Creates the `\\ad.demo.local\CorpData` namespace on both DCs and a replication group between them | 2 min |
-| 09 FSMO Report (Before) | Shows all five FSMO roles on `dc01` | 1 min |
+| 01 Provision Network | Creates a VPC, subnet, internet gateway, route table and security group. AD ports are open only inside the VPC. | <1 min |
+| 02 Provision DC Instances | Launches `dc01` (10.60.0.10) and `dc02` (10.60.0.11) and waits for WinRM | 2 min |
+| 03 Install AD Roles | Renames the servers to `dc01`/`dc02`, installs AD DS, DNS, DHCP, DFS and the RSAT tools, rebooting as needed | 3-5 min |
+| 04 Promote Forest Root | `dc01` creates the `ad.demo.local` forest | 2-3 min |
+| 05 Promote Additional DC | `dc02` joins the domain and becomes a second DC | 2 min |
+| 06 Configure DNS | Sets forwarders and adds sample A records | <1 min |
+| 07 Configure DHCP | Authorizes `dc01` in AD and creates a scope with router/DNS options | <1 min |
+| 08 Configure DFS | Creates the `\\ad.demo.local\CorpData` namespace on both DCs and a replication group between them | <1 min |
+| 09 FSMO Report (Before) | Shows all five FSMO roles on `dc01` | <1 min |
 | **Approve FSMO Transfer** | **The workflow stops here and waits for you** | - |
 | 10 FSMO Transfer | Moves the role(s) you picked to the target DC and waits for AD replication | 1 min |
-| 09 FSMO Report (After) | Shows the role now on `dc02`, read straight from AD | 1 min |
+| 09 FSMO Report (After) | Shows the role now on `dc02`, read straight from AD | <1 min |
+
+From scratch, the whole run takes about 13 minutes plus however long the approval waits. Rerunning it against an environment that's already built takes about 5 minutes.
 
 Click any box in the workflow view to watch that step's output live.
 
@@ -291,7 +293,7 @@ All defaults live in plain YAML files. Change them in your fork, commit, push, t
 | Step 04 says `safe_mode_password is not set` | The `AD Domain Secrets` credential is missing from `DC - 04`. Rerun `setup_demo.yml`. |
 | A job fails partway through | Open the failed step in the workflow view and read the red task output. After fixing the cause, relaunch the workflow. It skips what's already done. |
 | The approval expired | Launch `DC - 10 FSMO Transfer` and then `DC - 09 FSMO Report` on their own. |
-| Anything else | Run `DC - Teardown` and start a fresh build. A clean rebuild takes about an hour. |
+| Anything else | Run `DC - Teardown` and start a fresh build. A clean rebuild takes about 15 minutes. |
 
 ---
 
