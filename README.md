@@ -29,8 +29,6 @@ This repo builds a working two-server Active Directory domain in AWS and then ru
 
 ## 1. AAP in five minutes
 
-If you've never used AAP, these are the only terms you need for this guide. Everything below is created for you by one setup command (step 4). You don't have to build any of it by hand.
-
 | AAP term | What it is | In this demo |
 |---|---|---|
 | **Playbook** | A YAML file describing tasks to run (install a feature, run a PowerShell command, create a VPC...) | `playbooks/01_provision_network.yml` through `10_fsmo_transfer.yml` |
