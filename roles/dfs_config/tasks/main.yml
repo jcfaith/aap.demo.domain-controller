@@ -53,16 +53,24 @@
       $target = Get-DfsnRootTarget -Path $NamespacePath -ErrorAction SilentlyContinue |
         Where-Object { $_.TargetPath -like "\\$TargetHost\*" -or $_.TargetPath -like "\\$TargetHost.*" }
       if (-not $target) {
-        # New-DfsnRootTarget often creates the target and then errors with
-        # "object could not be found" while reading it back. Only fail if the
-        # target really isn't there afterwards.
-        try {
-          New-DfsnRootTarget -Path $NamespacePath -TargetPath $TargetPath | Out-Null
-        } catch {
-          Start-Sleep -Seconds 10
-          $created = Get-DfsnRootTarget -Path $NamespacePath -ErrorAction SilentlyContinue |
-            Where-Object { $_.TargetPath -like "\\$TargetHost\*" -or $_.TargetPath -like "\\$TargetHost.*" }
-          if (-not $created) { throw }
+        # The namespace was created on dc01 moments ago. Until that AD object
+        # replicates to dc02, adding a target here fails with "The requested
+        # object could not be found". Pull replication now, then retry for up
+        # to 5 minutes. A call can also succeed but error while reading the
+        # result back, so check for the target before every retry.
+        repadmin /syncall $env:COMPUTERNAME /Ade | Out-Null
+        $deadline = (Get-Date).AddMinutes(5)
+        while ($true) {
+          try {
+            New-DfsnRootTarget -Path $NamespacePath -TargetPath $TargetPath | Out-Null
+            break
+          } catch {
+            $created = Get-DfsnRootTarget -Path $NamespacePath -ErrorAction SilentlyContinue |
+              Where-Object { $_.TargetPath -like "\\$TargetHost\*" -or $_.TargetPath -like "\\$TargetHost.*" }
+            if ($created) { break }
+            if ((Get-Date) -gt $deadline) { throw }
+            Start-Sleep -Seconds 15
+          }
         }
         $Ansible.Changed = $true
       } else {
